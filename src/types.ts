@@ -39,7 +39,3 @@ export interface Prediction {
   };
 }
 
-export interface MultiplePredictions {
-  predictions: Prediction[];
-  stats: CycleStats;
-}

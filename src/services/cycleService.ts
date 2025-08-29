@@ -1,4 +1,4 @@
-import type { Measurement, CycleStats, Prediction, MultiplePredictions } from '../types';
+import type { Measurement, CycleStats, Prediction } from '../types';
 
 export class CycleService {
   static calculateCycleStats(measurements: Measurement[]): CycleStats {
@@ -60,52 +60,6 @@ export class CycleService {
     };
   }
 
-  static predictMultipleCycles(measurements: Measurement[], maxMonthsAhead = 12): MultiplePredictions {
-    const stats = this.calculateCycleStats(measurements);
-    const lastPeriodStart = this.getLastPeriodStart(measurements);
-    const predictions: Prediction[] = [];
-    
-    if (!lastPeriodStart) {
-      // Fallback to current date if no period data
-      const today = new Date();
-      for (let i = 1; i <= Math.min(maxMonthsAhead, 12); i++) {
-        const periodDate = new Date(today.getTime() + (i * 28 * 24 * 60 * 60 * 1000));
-        const ovulationDate = new Date(periodDate.getTime() - 14 * 24 * 60 * 60 * 1000);
-        
-        predictions.push({
-          nextPeriod: this.formatLocalDate(periodDate),
-          ovulation: this.formatLocalDate(ovulationDate),
-          fertileWindow: {
-            start: this.formatLocalDate(new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000)),
-            end: this.formatLocalDate(new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000))
-          }
-        });
-      }
-      return { predictions, stats };
-    }
-
-    // Calculate multiple future cycles
-    let currentPeriodStart = lastPeriodStart;
-    const cycleLength = Math.round(stats.averageCycleLength);
-    
-    for (let i = 1; i <= Math.min(maxMonthsAhead, 12); i++) {
-      const nextPeriodDate = new Date(currentPeriodStart.getTime() + (cycleLength * 24 * 60 * 60 * 1000));
-      const ovulationDate = new Date(nextPeriodDate.getTime() - 14 * 24 * 60 * 60 * 1000);
-      
-      predictions.push({
-        nextPeriod: this.formatLocalDate(nextPeriodDate),
-        ovulation: this.formatLocalDate(ovulationDate),
-        fertileWindow: {
-          start: this.formatLocalDate(new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000)),
-          end: this.formatLocalDate(new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000))
-        }
-      });
-      
-      currentPeriodStart = nextPeriodDate;
-    }
-
-    return { predictions, stats };
-  }
 
   private static calculateWeightedAverage(values: number[]): number {
     if (values.length === 0) return 0;

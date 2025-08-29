@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useCycleData } from '../hooks/useCycleData';
 import { useCyclePredictions } from '../hooks/useCyclePredictions';
 import CalendarModal from './CalendarModal';
 import CalendarDay from './CalendarDay';
 
 export default function Calendar() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { measurements, groupedMeasurements, stats, loading, saveMeasurement } = useCycleData();
   
@@ -229,7 +228,6 @@ export default function Calendar() {
             <CalendarDay
               key={`${dateStr}-${index}`}
               day={day}
-              currentMonth={currentDate}
               measurements={dayMeasurements}
               isPredPeriod={predictions.isPredictedPeriod(dateStr)}
               isPredOvulation={predictions.isPredictedOvulation(dateStr)}

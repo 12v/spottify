@@ -2,7 +2,6 @@ import type { Measurement } from '../types';
 
 interface CalendarDayProps {
   day: Date;
-  currentMonth: Date;
   measurements: Measurement[];
   isPredPeriod: boolean;
   isPredOvulation: boolean;
@@ -13,7 +12,6 @@ interface CalendarDayProps {
 
 export default function CalendarDay({
   day,
-  currentMonth,
   measurements,
   isPredPeriod,
   isPredOvulation,
