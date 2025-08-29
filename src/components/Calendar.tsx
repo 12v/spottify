@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCycleData } from '../hooks/useCycleData';
 import { useCyclePredictions } from '../hooks/useCyclePredictions';
+import { formatLocalDate } from '../utils/dateUtils';
 import CalendarModal from './CalendarModal';
 import CalendarDay from './CalendarDay';
 
 export default function Calendar() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { measurements, groupedMeasurements, stats, loading, saveMeasurement } = useCycleData();
   
@@ -25,12 +27,24 @@ export default function Calendar() {
 
   const predictions = useCyclePredictions(measurements, stats);
 
-  function formatDate(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
+  // Auto-open modal if requested via URL parameter
+  useEffect(() => {
+    const openModal = searchParams.get('openModal');
+    const dateParam = searchParams.get('date');
+    
+    if (openModal === 'true' && dateParam && !showModal && !loading) {
+      handleDayClick(dateParam);
+      
+      // Clean up URL parameters
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('openModal');
+      newSearchParams.delete('date');
+      const newUrl = newSearchParams.toString() ? 
+        `/calendar?${newSearchParams.toString()}` : '/calendar';
+      navigate(newUrl, { replace: true });
+    }
+  }, [searchParams, showModal, loading, navigate]);
+
 
   function generateCalendar() {
     const year = currentDate.getFullYear();
@@ -86,26 +100,11 @@ export default function Calendar() {
     cramps: string;
     soreBreasts: string;
   }) {
-    const promises = [];
-
-    // Save each measurement type
-    if (modalMeasurements.period !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'period')) {
-      promises.push(saveMeasurement(modalDate, 'period', modalMeasurements.period));
-    }
-
-    if (modalMeasurements.bbt || groupedMeasurements[modalDate]?.find(m => m.type === 'bbt')) {
-      promises.push(saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt));
-    }
-
-    if (modalMeasurements.cramps !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'cramps')) {
-      promises.push(saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps));
-    }
-
-    if (modalMeasurements.soreBreasts !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'sore_breasts')) {
-      promises.push(saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts));
-    }
-
-    await Promise.all(promises);
+    // Save each measurement type individually
+    await saveMeasurement(modalDate, 'period', modalMeasurements.period);
+    await saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt);
+    await saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps);
+    await saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts);
   }
 
   const calendarDays = generateCalendar();
@@ -119,7 +118,7 @@ export default function Calendar() {
     return (
       <div className="page-container" style={{ maxWidth: '900px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h2>📅 Calendar</h2>
+          <h2 style={{ margin: 0 }}>📅 Calendar</h2>
           <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
             ← Dashboard
           </Link>
@@ -150,11 +149,16 @@ export default function Calendar() {
 
   return (
     <div className="page-container" style={{ maxWidth: '900px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>📅 Calendar</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <h2 style={{ margin: 0 }}>📅 Calendar</h2>
         <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
           ← Dashboard
         </Link>
+      </div>
+
+      {/* Month/Year Display */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0, textAlign: 'center' }}>{monthYear}</h3>
       </div>
 
       {/* Calendar Navigation */}
@@ -165,29 +169,33 @@ export default function Calendar() {
         >
           ← Previous
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h3 style={{ margin: 0, minWidth: '200px', textAlign: 'center' }}>{monthYear}</h3>
-          {!isCurrentMonth && (
-            <button
-              onClick={goToCurrentMonth}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#4682B4',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5A9BD4'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#4682B4'}
-            >
-              Go to Today
-            </button>
-          )}
-        </div>
+        <button
+          onClick={goToCurrentMonth}
+          disabled={isCurrentMonth}
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: isCurrentMonth ? '#ccc' : '#4682B4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '0.9rem',
+            cursor: isCurrentMonth ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={(e) => {
+            if (!isCurrentMonth) {
+              (e.target as HTMLButtonElement).style.backgroundColor = '#5A9BD4';
+            }
+          }}
+          onMouseOut={(e) => {
+            if (!isCurrentMonth) {
+              (e.target as HTMLButtonElement).style.backgroundColor = '#4682B4';
+            }
+          }}
+        >
+          Today
+        </button>
         <button
           onClick={() => navigateMonth(1)}
           style={{ padding: '0.5rem 1rem', backgroundColor: '#8B0000', color: 'white', border: 'none', borderRadius: '4px' }}
@@ -221,7 +229,7 @@ export default function Calendar() {
 
         {/* Calendar days */}
         {calendarDays.map((day, index) => {
-          const dateStr = formatDate(day);
+          const dateStr = formatLocalDate(day);
           const dayMeasurements = groupedMeasurements[dateStr] || [];
           
           return (
@@ -243,7 +251,7 @@ export default function Calendar() {
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p>No data recorded yet.</p>
           <button
-            onClick={() => handleDayClick(formatDate(new Date()))}
+            onClick={() => handleDayClick(formatLocalDate(new Date()))}
             style={{
               padding: '0.75rem 1.5rem',
               border: 'none',

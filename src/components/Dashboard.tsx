@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
+import { formatLocalDate, formatDisplayDate } from '../utils/dateUtils';
 import type { Measurement, Prediction } from '../types';
 
 const dataService = new DataService();
@@ -43,7 +44,7 @@ export default function Dashboard() {
 
     try {
       const exportData = {
-        exportDate: new Date().toISOString(),
+        exportDate: formatLocalDate(new Date()),
         userId: currentUser.uid,
         measurements: measurements
       };
@@ -54,7 +55,7 @@ export default function Dashboard() {
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `spottify-data-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `spottify-data-${formatLocalDate(new Date())}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -67,9 +68,6 @@ export default function Dashboard() {
     }
   }
 
-  function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString();
-  }
 
   function getDaysUntil(dateStr: string) {
     const target = new Date(dateStr);
@@ -127,16 +125,14 @@ export default function Dashboard() {
         
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <Link 
-            to={`/calendar?openModal=true&date=${new Date().toISOString().split('T')[0]}`}
+            to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
             style={{ 
               padding: '2rem', 
               border: '1px solid #ddd', 
               borderRadius: '4px', 
               textDecoration: 'none', 
               textAlign: 'center',
-              color: 'inherit',
-              opacity: '0.7',
-              pointerEvents: 'none'
+              color: 'inherit'
             }}
           >
             <h3>Log Today</h3>
@@ -233,15 +229,15 @@ export default function Dashboard() {
           <h3>Predictions</h3>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             <div>
-              <strong>Next Period:</strong> {formatDate(prediction.nextPeriod)} 
+              <strong>Next Period:</strong> {formatDisplayDate(prediction.nextPeriod)} 
               ({getDaysUntil(prediction.nextPeriod)} days)
             </div>
             <div>
-              <strong>Ovulation:</strong> {formatDate(prediction.ovulation)}
+              <strong>Ovulation:</strong> {formatDisplayDate(prediction.ovulation)}
               ({getDaysUntil(prediction.ovulation)} days)
             </div>
             <div>
-              <strong>Fertile Window:</strong> {formatDate(prediction.fertileWindow.start)} - {formatDate(prediction.fertileWindow.end)}
+              <strong>Fertile Window:</strong> {formatDisplayDate(prediction.fertileWindow.start)} - {formatDisplayDate(prediction.fertileWindow.end)}
             </div>
           </div>
         </div>
@@ -255,7 +251,7 @@ export default function Dashboard() {
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <Link 
-          to={`/calendar?openModal=true&date=${new Date().toISOString().split('T')[0]}`}
+          to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
           style={{ 
             padding: '2rem', 
             border: '1px solid #ddd', 

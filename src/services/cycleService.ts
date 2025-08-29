@@ -1,4 +1,5 @@
 import type { Measurement, CycleStats, Prediction } from '../types';
+import { formatLocalDate } from '../utils/dateUtils';
 
 export class CycleService {
   static calculateCycleStats(measurements: Measurement[]): CycleStats {
@@ -29,20 +30,15 @@ export class CycleService {
     const stats = this.calculateCycleStats(measurements);
     const lastPeriodStart = this.getLastPeriodStart(measurements);
     
-    console.log('Cycle prediction debug:', {
-      averageCycleLength: stats.averageCycleLength,
-      lastPeriodStart: lastPeriodStart?.toISOString().split('T')[0],
-      periodCount: measurements.filter(m => m.type === 'period' && (m.value as any).option !== 'none').length
-    });
     
     if (!lastPeriodStart) {
       const today = new Date();
       return {
-        nextPeriod: this.formatLocalDate(new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000)),
-        ovulation: this.formatLocalDate(new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)),
+        nextPeriod: formatLocalDate(new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000)),
+        ovulation: formatLocalDate(new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)),
         fertileWindow: {
-          start: this.formatLocalDate(new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000)),
-          end: this.formatLocalDate(new Date(today.getTime() + 16 * 24 * 60 * 60 * 1000))
+          start: formatLocalDate(new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000)),
+          end: formatLocalDate(new Date(today.getTime() + 16 * 24 * 60 * 60 * 1000))
         }
       };
     }
@@ -51,11 +47,11 @@ export class CycleService {
     const ovulationDate = new Date(nextPeriodDate.getTime() - 14 * 24 * 60 * 60 * 1000);
     
     return {
-      nextPeriod: this.formatLocalDate(nextPeriodDate),
-      ovulation: this.formatLocalDate(ovulationDate),
+      nextPeriod: formatLocalDate(nextPeriodDate),
+      ovulation: formatLocalDate(ovulationDate),
       fertileWindow: {
-        start: this.formatLocalDate(new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000)),
-        end: this.formatLocalDate(new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000))
+        start: formatLocalDate(new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000)),
+        end: formatLocalDate(new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000))
       }
     };
   }
@@ -136,18 +132,8 @@ export class CycleService {
       periodStart = periodMeasurements[i].date;
     }
 
-    console.log('Period start debug:', {
-      mostRecentPeriodStart: periodStart,
-      allRecentDays: periodMeasurements.slice(0, 10).map(m => m.date)
-    });
 
     return new Date(periodStart);
   }
 
-  private static formatLocalDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
 }

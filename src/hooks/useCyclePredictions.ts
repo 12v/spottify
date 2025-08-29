@@ -1,14 +1,8 @@
 import { CycleService } from '../services/cycleService';
+import { formatLocalDate } from '../utils/dateUtils';
 import type { Measurement, CycleStats } from '../types';
 
 export function useCyclePredictions(measurements: Measurement[], stats: CycleStats | null) {
-  
-  function formatDate(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
 
   function isPredictedPeriod(dateStr: string) {
     if (!stats) return false;
@@ -44,7 +38,7 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
 
     // Current cycle ovulation (14 days before next expected period)
     const currentOvulation = new Date(lastPeriodStart.getTime() + (averageCycleLength - 14) * 24 * 60 * 60 * 1000);
-    if (formatDate(checkDate) === formatDate(currentOvulation)) return true;
+    if (formatLocalDate(checkDate) === formatLocalDate(currentOvulation)) return true;
 
     // Future cycles
     if (daysSinceLastPeriod < averageCycleLength) return false;
@@ -52,7 +46,7 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
     const cycleNumber = Math.floor(daysSinceLastPeriod / averageCycleLength);
     const ovulationDate = new Date(lastPeriodStart.getTime() + (cycleNumber * averageCycleLength + (averageCycleLength - 14)) * 24 * 60 * 60 * 1000);
 
-    return formatDate(checkDate) === formatDate(ovulationDate);
+    return formatLocalDate(checkDate) === formatLocalDate(ovulationDate);
   }
 
   function isInFertileWindow(dateStr: string) {
@@ -85,7 +79,7 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
   }
 
   function isToday(dateStr: string) {
-    const today = formatDate(new Date());
+    const today = formatLocalDate(new Date());
     return dateStr === today;
   }
 
