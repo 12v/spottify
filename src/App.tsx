@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Login from './components/Login';
@@ -9,6 +10,14 @@ import ImportData from './components/ImportData';
 import './App.css'
 
 function App() {
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectPath');
+      window.history.replaceState(null, '', redirectPath);
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router basename="/spottify">

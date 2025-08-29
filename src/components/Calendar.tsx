@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
@@ -9,6 +9,7 @@ const dataService = new DataService();
 
 export default function Calendar() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [groupedMeasurements, setGroupedMeasurements] = useState<Record<string, Measurement[]>>({});
@@ -51,6 +52,16 @@ export default function Calendar() {
       setCurrentDate(newDate);
     }
   }, [searchParams]);
+
+  // Auto-open modal if requested via URL parameter
+  useEffect(() => {
+    const openModal = searchParams.get('openModal');
+    const dateParam = searchParams.get('date');
+    
+    if (openModal === 'true' && dateParam && !showModal && !loading) {
+      handleDayClick(dateParam);
+    }
+  }, [searchParams, showModal, loading, groupedMeasurements]);
 
   async function loadData() {
     if (!currentUser) return;
@@ -214,6 +225,17 @@ export default function Calendar() {
     });
 
     setShowModal(true);
+    
+    // Clean up URL parameters if they were used to auto-open modal
+    const openModal = searchParams.get('openModal');
+    if (openModal === 'true') {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('openModal');
+      newSearchParams.delete('date');
+      const newUrl = newSearchParams.toString() ? 
+        `/calendar?${newSearchParams.toString()}` : '/calendar';
+      navigate(newUrl, { replace: true });
+    }
   }
 
   async function handleModalSubmit(e: React.FormEvent) {
@@ -374,41 +396,6 @@ export default function Calendar() {
         </button>
       </div>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#d32f2f', borderRadius: '2px' }}></div>
-          Heavy Flow
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#f57c00', borderRadius: '2px' }}></div>
-          Medium Flow
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#fbc02d', borderRadius: '2px' }}></div>
-          Light Flow
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#e1bee7', borderRadius: '2px' }}></div>
-          Other Data
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#FF69B4', borderRadius: '2px', border: '2px dashed #8B0000' }}></div>
-          Predicted Period
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#32CD32', borderRadius: '50%' }}></div>
-          Ovulation
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#FFE4E1', borderRadius: '2px', border: '1px solid #90EE90' }}></div>
-          Fertile Window
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <div style={{ width: '12px', height: '12px', backgroundColor: '#4169E1', borderRadius: '50%', border: '2px solid #000080' }}></div>
-          Today
-        </div>
-      </div>
 
       {/* Calendar Grid */}
       <div style={{

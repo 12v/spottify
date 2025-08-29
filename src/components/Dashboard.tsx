@@ -10,7 +10,7 @@ const dataService = new DataService();
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const [prediction, setPrediction] = useState<Prediction | null>(null);
-  const [, setMeasurements] = useState<Measurement[]>([]);
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +32,38 @@ export default function Dashboard() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleExport() {
+    if (!currentUser || measurements.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    try {
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        userId: currentUser.uid,
+        measurements: measurements
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `spottify-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      alert('Data exported successfully!');
+    } catch (error) {
+      alert('Error exporting data');
+      console.error('Export error:', error);
     }
   }
 
@@ -95,7 +127,7 @@ export default function Dashboard() {
         
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <Link 
-            to="/calendar" 
+            to={`/calendar?openModal=true&date=${new Date().toISOString().split('T')[0]}`}
             style={{ 
               padding: '2rem', 
               border: '1px solid #ddd', 
@@ -162,6 +194,19 @@ export default function Dashboard() {
             <h3>📥 Import Data</h3>
             <p>Import historical data</p>
           </Link>
+
+          <div style={{ 
+            padding: '2rem', 
+            border: '1px solid #28a745', 
+            borderRadius: '4px', 
+            textAlign: 'center',
+            color: 'inherit',
+            backgroundColor: '#f5f5f5',
+            opacity: '0.7'
+          }}>
+            <h3>📤 Export Data</h3>
+            <p>Download your data</p>
+          </div>
         </div>
 
         <style>{`
@@ -210,7 +255,7 @@ export default function Dashboard() {
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <Link 
-          to="/calendar" 
+          to={`/calendar?openModal=true&date=${new Date().toISOString().split('T')[0]}`}
           style={{ 
             padding: '2rem', 
             border: '1px solid #ddd', 
@@ -269,6 +314,24 @@ export default function Dashboard() {
           <h3>📥 Import Data</h3>
           <p>Import historical data</p>
         </Link>
+
+        <button 
+          onClick={handleExport}
+          disabled={!measurements.length}
+          style={{ 
+            padding: '2rem', 
+            border: '1px solid #28a745', 
+            borderRadius: '4px', 
+            textAlign: 'center',
+            color: 'inherit',
+            backgroundColor: measurements.length ? '#f0f8f0' : '#f5f5f5',
+            cursor: measurements.length ? 'pointer' : 'not-allowed',
+            opacity: measurements.length ? 1 : 0.6
+          }}
+        >
+          <h3>📤 Export Data</h3>
+          <p>Download your data</p>
+        </button>
       </div>
     </div>
   );
