@@ -8,12 +8,12 @@ export interface Measurement {
 export type MeasurementType = 'period' | 'bbt' | 'cramps' | 'sore_breasts';
 
 export type MeasurementValue = 
-  | { option: 'none' | 'light' | 'medium' | 'heavy' } // period
+  | { option: 'none' | 'spotting' | 'light' | 'medium' | 'heavy' } // period
   | { celsius: number } // bbt
   | { severity: 'none' | 'mild' | 'moderate' | 'severe' } // cramps/sore_breasts
 
 export interface PeriodValue {
-  option: 'none' | 'light' | 'medium' | 'heavy';
+  option: 'none' | 'spotting' | 'light' | 'medium' | 'heavy';
 }
 
 export interface BBTValue {
@@ -37,4 +37,9 @@ export interface Prediction {
     start: string;
     end: string;
   };
+}
+
+export interface MultiplePredictions {
+  predictions: Prediction[];
+  stats: CycleStats;
 }

@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, orderBy, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, where, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Measurement } from '../types';
 
@@ -40,5 +40,10 @@ export class DataService {
       id: doc.id,
       ...doc.data()
     } as Measurement));
+  }
+
+  async deleteMeasurement(userId: string, measurementId: string): Promise<void> {
+    const docRef = doc(db, 'measurements', measurementId);
+    await deleteDoc(docRef);
   }
 }

@@ -1,19 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { DataService } from '../services/dataService';
-import { CycleService } from '../services/cycleService';
-import type { Measurement, Prediction, MeasurementType } from '../types';
-
-const dataService = new DataService();
+import { useCycleData } from '../hooks/useCycleData';
+import { useCyclePredictions } from '../hooks/useCyclePredictions';
+import CalendarModal from './CalendarModal';
+import CalendarDay from './CalendarDay';
 
 export default function Calendar() {
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [groupedMeasurements, setGroupedMeasurements] = useState<Record<string, Measurement[]>>({});
-
+  const { measurements, groupedMeasurements, stats, loading, saveMeasurement } = useCycleData();
+  
   // Initialize currentDate from URL parameters or default to now
   const [currentDate, setCurrentDate] = useState(() => {
     const yearParam = searchParams.get('year');
@@ -23,133 +19,51 @@ export default function Calendar() {
     }
     return new Date();
   });
-  const [prediction, setPrediction] = useState<Prediction | null>(null);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState('');
-  const [modalMeasurements, setModalMeasurements] = useState({
-    period: 'none',
-    bbt: '',
-    cramps: 'none',
-    soreBreasts: 'none'
-  });
 
-  useEffect(() => {
-    if (currentUser) {
-      loadData();
-    }
-  }, [currentUser]);
+  const predictions = useCyclePredictions(measurements, stats);
 
-  // Update currentDate when URL parameters change
-  useEffect(() => {
-    const yearParam = searchParams.get('year');
-    const monthParam = searchParams.get('month');
-    if (yearParam && monthParam) {
-      const newDate = new Date(parseInt(yearParam), parseInt(monthParam), 1);
-      setCurrentDate(newDate);
-    }
-  }, [searchParams]);
-
-  // Auto-open modal if requested via URL parameter
-  useEffect(() => {
-    const openModal = searchParams.get('openModal');
-    const dateParam = searchParams.get('date');
-    
-    if (openModal === 'true' && dateParam && !showModal && !loading) {
-      handleDayClick(dateParam);
-    }
-  }, [searchParams, showModal, loading, groupedMeasurements]);
-
-  async function loadData() {
-    if (!currentUser) return;
-
-    setLoading(true);
-    try {
-      const data = await dataService.getMeasurements(currentUser.uid);
-      setMeasurements(data);
-
-      const grouped = data.reduce((acc, measurement) => {
-        if (!acc[measurement.date]) {
-          acc[measurement.date] = [];
-        }
-        acc[measurement.date].push(measurement);
-        return acc;
-      }, {} as Record<string, Measurement[]>);
-
-      setGroupedMeasurements(grouped);
-
-      // Calculate predictions
-      const pred = CycleService.predictNextCycle(data);
-      setPrediction(pred);
-
-      // Calculate stats for multiple period predictions
-      const cycleStats = CycleService.calculateCycleStats(data);
-      setStats(cycleStats);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function getDayColor(dateStr: string) {
-    const dayMeasurements = groupedMeasurements[dateStr] || [];
-    const periodMeasurement = dayMeasurements.find(m => m.type === 'period');
-
-    if (periodMeasurement) {
-      const flow = (periodMeasurement.value as any).option;
-      switch (flow) {
-        case 'heavy': return '#d32f2f';
-        case 'medium': return '#f57c00';
-        case 'light': return '#fbc02d';
-        default: return '#e0e0e0';
-      }
-    }
-
-    // Check for other measurements
-    if (dayMeasurements.length > 0) {
-      return '#e1bee7'; // Light purple for other data
-    }
-
-    return 'transparent';
-  }
-
-  function getDayData(dateStr: string) {
-    const dayMeasurements = groupedMeasurements[dateStr] || [];
-    const period = dayMeasurements.find(m => m.type === 'period');
-    const bbt = dayMeasurements.find(m => m.type === 'bbt');
-    const symptoms = dayMeasurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
-
-    return {
-      period: period ? (period.value as any).option : null,
-      bbt: bbt ? (bbt.value as any).celsius : null,
-      symptoms: symptoms.length
-    };
+  function formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   function generateCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const lastDay = new Date(year, month + 1, 0); // Last day of current month
+
+    // Adjust for Monday-first week: Sunday=0 becomes 6, Monday=1 becomes 0, etc.
+    const firstDayOfWeek = (firstDay.getDay() + 6) % 7;
+    const lastDayOfWeek = (lastDay.getDay() + 6) % 7;
 
     const days = [];
-    const current = new Date(startDate);
 
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
+    // Add partial week from previous month (only the days needed to complete the first row)
+    const prevMonth = new Date(year, month, 0);
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const day = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevMonth.getDate() - i);
+      days.push(day);
+    }
+
+    // Add all days of current month
+    for (let date = 1; date <= lastDay.getDate(); date++) {
+      days.push(new Date(year, month, date));
+    }
+
+    // Add partial week from next month (only the days needed to complete the last row)
+    const daysToAdd = 6 - lastDayOfWeek;
+    for (let i = 1; i <= daysToAdd; i++) {
+      days.push(new Date(year, month + 1, i));
     }
 
     return days;
-  }
-
-  function formatDate(date: Date) {
-    return date.toISOString().split('T')[0];
   }
 
   function navigateMonth(direction: number) {
@@ -162,151 +76,38 @@ export default function Calendar() {
     setCurrentDate(new Date());
   }
 
-  function isPredictedPeriod(dateStr: string) {
-    if (!prediction || !stats) return false;
-
-    const checkDate = new Date(dateStr);
-    const firstPeriodDate = new Date(prediction.nextPeriod);
-    const averageCycleLength = Math.round(stats.averageCycleLength);
-    const averagePeriodLength = Math.round(stats.averagePeriodLength);
-
-    // Only calculate predictions if the date is in the future
-    if (checkDate < firstPeriodDate) return false;
-
-    // Calculate which cycle this date might belong to
-    const daysSinceFirstPrediction = Math.floor((checkDate.getTime() - firstPeriodDate.getTime()) / (1000 * 60 * 60 * 24));
-    const cycleNumber = Math.floor(daysSinceFirstPrediction / averageCycleLength);
-
-    // Only calculate predictions for dates within a reasonable range (e.g., 3 years ahead)
-    if (cycleNumber > 36) return false;
-
-    const periodStartDate = new Date(firstPeriodDate);
-    periodStartDate.setDate(periodStartDate.getDate() + (cycleNumber * averageCycleLength));
-
-    const daysDiff = Math.floor((checkDate.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
-
-    // Check if date falls within this predicted period
-    return daysDiff >= 0 && daysDiff < averagePeriodLength;
-  }
-
-  function isPredictedOvulation(dateStr: string) {
-    if (!prediction) return false;
-    return dateStr === prediction.ovulation;
-  }
-
-  function isInFertileWindow(dateStr: string) {
-    if (!prediction) return false;
-    const date = new Date(dateStr);
-    const fertileStart = new Date(prediction.fertileWindow.start);
-    const fertileEnd = new Date(prediction.fertileWindow.end);
-    return date >= fertileStart && date <= fertileEnd;
-  }
-
-  function isToday(dateStr: string) {
-    const today = new Date().toISOString().split('T')[0];
-    return dateStr === today;
-  }
-
   function handleDayClick(dateStr: string) {
     setModalDate(dateStr);
-
-    // Load existing data for this date if it exists
-    const existingData = groupedMeasurements[dateStr] || [];
-    const periodData = existingData.find(m => m.type === 'period');
-    const bbtData = existingData.find(m => m.type === 'bbt');
-    const crampsData = existingData.find(m => m.type === 'cramps');
-    const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
-
-    setModalMeasurements({
-      period: periodData ? (periodData.value as any).option : 'none',
-      bbt: bbtData ? String((bbtData.value as any).celsius) : '',
-      cramps: crampsData ? (crampsData.value as any).severity : 'none',
-      soreBreasts: soreBreastsData ? (soreBreastsData.value as any).severity : 'none'
-    });
-
     setShowModal(true);
-    
-    // Clean up URL parameters if they were used to auto-open modal
-    const openModal = searchParams.get('openModal');
-    if (openModal === 'true') {
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('openModal');
-      newSearchParams.delete('date');
-      const newUrl = newSearchParams.toString() ? 
-        `/calendar?${newSearchParams.toString()}` : '/calendar';
-      navigate(newUrl, { replace: true });
+  }
+
+  async function handleModalSave(modalMeasurements: {
+    period: string;
+    bbt: string;
+    cramps: string;
+    soreBreasts: string;
+  }) {
+    const promises = [];
+
+    // Save each measurement type
+    if (modalMeasurements.period !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'period')) {
+      promises.push(saveMeasurement(modalDate, 'period', modalMeasurements.period));
     }
-  }
 
-  async function handleModalSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    try {
-      const promises = [];
-
-      if (modalMeasurements.period !== 'none') {
-        promises.push(dataService.addMeasurement(currentUser.uid, {
-          type: 'period' as MeasurementType,
-          date: modalDate,
-          value: { option: modalMeasurements.period as any }
-        }));
-      }
-
-      if (modalMeasurements.bbt) {
-        promises.push(dataService.addMeasurement(currentUser.uid, {
-          type: 'bbt' as MeasurementType,
-          date: modalDate,
-          value: { celsius: parseFloat(modalMeasurements.bbt) }
-        }));
-      }
-
-      if (modalMeasurements.cramps !== 'none') {
-        promises.push(dataService.addMeasurement(currentUser.uid, {
-          type: 'cramps' as MeasurementType,
-          date: modalDate,
-          value: { severity: modalMeasurements.cramps as any }
-        }));
-      }
-
-      if (modalMeasurements.soreBreasts !== 'none') {
-        promises.push(dataService.addMeasurement(currentUser.uid, {
-          type: 'sore_breasts' as MeasurementType,
-          date: modalDate,
-          value: { severity: modalMeasurements.soreBreasts as any }
-        }));
-      }
-
-      await Promise.all(promises);
-
-      // Reload data to update the calendar
-      await loadData();
-
-      // Close modal and reset form
-      setShowModal(false);
-      setModalMeasurements({
-        period: 'none',
-        bbt: '',
-        cramps: 'none',
-        soreBreasts: 'none'
-      });
-
-      alert('Data saved!');
-    } catch (error) {
-      alert('Error saving data');
+    if (modalMeasurements.bbt || groupedMeasurements[modalDate]?.find(m => m.type === 'bbt')) {
+      promises.push(saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt));
     }
-  }
 
-  function handleModalClose() {
-    setShowModal(false);
-    setModalMeasurements({
-      period: 'none',
-      bbt: '',
-      cramps: 'none',
-      soreBreasts: 'none'
-    });
-  }
+    if (modalMeasurements.cramps !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'cramps')) {
+      promises.push(saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps));
+    }
 
+    if (modalMeasurements.soreBreasts !== 'none' || groupedMeasurements[modalDate]?.find(m => m.type === 'sore_breasts')) {
+      promises.push(saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts));
+    }
+
+    await Promise.all(promises);
+  }
 
   const calendarDays = generateCalendar();
   const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -366,7 +167,7 @@ export default function Calendar() {
           ← Previous
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h3 style={{ margin: 0 }}>{monthYear}</h3>
+          <h3 style={{ margin: 0, minWidth: '200px', textAlign: 'center' }}>{monthYear}</h3>
           {!isCurrentMonth && (
             <button
               onClick={goToCurrentMonth}
@@ -396,7 +197,6 @@ export default function Calendar() {
         </button>
       </div>
 
-
       {/* Calendar Grid */}
       <div style={{
         display: 'grid',
@@ -408,7 +208,7 @@ export default function Calendar() {
         overflow: 'hidden'
       }}>
         {/* Day headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
           <div key={day} style={{
             padding: '0.5rem',
             backgroundColor: '#f5f5f5',
@@ -421,117 +221,22 @@ export default function Calendar() {
         ))}
 
         {/* Calendar days */}
-        {calendarDays.map(day => {
+        {calendarDays.map((day, index) => {
           const dateStr = formatDate(day);
-          const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-          const dayData = getDayData(dateStr);
-          const backgroundColor = getDayColor(dateStr);
-          const hasData = Object.keys(groupedMeasurements).includes(dateStr);
-          const isPredPeriod = isPredictedPeriod(dateStr);
-          const isPredOvulation = isPredictedOvulation(dateStr);
-          const inFertileWindow = isInFertileWindow(dateStr);
-          const todayMarker = isToday(dateStr);
-
-          let dayBackgroundColor = isCurrentMonth ? 'white' : '#f9f9f9';
-          if (inFertileWindow && !hasData) {
-            dayBackgroundColor = '#FFE4E1';
-          }
-          // Today uses border only, no background override
-
+          const dayMeasurements = groupedMeasurements[dateStr] || [];
+          
           return (
-            <div
-              key={dateStr}
+            <CalendarDay
+              key={`${dateStr}-${index}`}
+              day={day}
+              currentMonth={currentDate}
+              measurements={dayMeasurements}
+              isPredPeriod={predictions.isPredictedPeriod(dateStr)}
+              isPredOvulation={predictions.isPredictedOvulation(dateStr)}
+              inFertileWindow={predictions.isInFertileWindow(dateStr)}
+              isToday={predictions.isToday(dateStr)}
               onClick={() => handleDayClick(dateStr)}
-              style={{
-                padding: '0.5rem',
-                backgroundColor: dayBackgroundColor,
-                border: todayMarker ? '3px solid #4169E1' :
-                  hasData ? `2px solid ${backgroundColor}` :
-                    inFertileWindow ? '1px solid #90EE90' : 'none',
-                minHeight: '60px',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                opacity: isCurrentMonth ? 1 : 0.6,
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{
-                fontSize: '0.8rem',
-                fontWeight: todayMarker ? 'bold' : (isCurrentMonth ? 'normal' : '300'),
-                marginBottom: '0.25rem',
-                color: todayMarker ? '#4169E1' : 'inherit'
-              }}>
-                {day.getDate()}
-                {todayMarker && <span style={{ fontSize: '0.6rem' }}> 📅</span>}
-              </div>
-
-              <div style={{ fontSize: '0.6rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                {/* Predictions */}
-                {isPredPeriod && (
-                  <div style={{
-                    backgroundColor: '#FF69B4',
-                    color: 'white',
-                    padding: '1px 3px',
-                    borderRadius: '2px',
-                    textAlign: 'center',
-                    border: '1px dashed #8B0000'
-                  }}>
-                    Period
-                  </div>
-                )}
-                {isPredOvulation && (
-                  <div style={{
-                    backgroundColor: '#32CD32',
-                    color: 'white',
-                    padding: '1px 3px',
-                    borderRadius: '2px',
-                    textAlign: 'center'
-                  }}>
-                    🥚 Ovulation
-                  </div>
-                )}
-
-                {/* Actual Data */}
-                {hasData && (
-                  <>
-                    {dayData.period && (
-                      <div style={{
-                        textAlign: 'center',
-                        fontSize: '12px',
-                        lineHeight: '1'
-                      }}>
-                        {dayData.period === 'heavy' ? '🩸🩸🩸' :
-                          dayData.period === 'medium' ? '🩸🩸' : '🩸'}
-                      </div>
-                    )}
-                    {dayData.bbt && (
-                      <div style={{
-                        backgroundColor: '#2196f3',
-                        color: 'white',
-                        padding: '1px 3px',
-                        borderRadius: '2px',
-                        textAlign: 'center'
-                      }}>
-                        {dayData.bbt}°
-                      </div>
-                    )}
-                    {dayData.symptoms > 0 && (
-                      <div style={{
-                        backgroundColor: '#ff9800',
-                        color: 'white',
-                        padding: '1px 3px',
-                        borderRadius: '2px',
-                        textAlign: 'center',
-                        fontSize: '0.5rem'
-                      }}>
-                        {dayData.symptoms}⚠
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+            />
           );
         })}
       </div>
@@ -540,7 +245,7 @@ export default function Calendar() {
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p>No data recorded yet.</p>
           <button
-            onClick={() => handleDayClick(new Date().toISOString().split('T')[0])}
+            onClick={() => handleDayClick(formatDate(new Date()))}
             style={{
               padding: '0.75rem 1.5rem',
               border: 'none',
@@ -555,149 +260,13 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* Daily Input Modal */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '2rem',
-            borderRadius: '8px',
-            maxWidth: '500px',
-            width: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0 }}>
-                Log Data - {new Date(modalDate).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </h3>
-              <button
-                onClick={handleModalClose}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  padding: '0.25rem',
-                  color: '#666'
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleModalSubmit}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="modal-period">Period Flow</label>
-                <select
-                  id="modal-period"
-                  value={modalMeasurements.period}
-                  onChange={(e) => setModalMeasurements(prev => ({ ...prev, period: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                >
-                  <option value="none">None</option>
-                  <option value="light">Light 🩸</option>
-                  <option value="medium">Medium 🩸🩸</option>
-                  <option value="heavy">Heavy 🩸🩸🩸</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="modal-bbt">Basal Body Temperature (°C)</label>
-                <input
-                  type="number"
-                  id="modal-bbt"
-                  step="0.01"
-                  min="35"
-                  max="40"
-                  value={modalMeasurements.bbt}
-                  onChange={(e) => setModalMeasurements(prev => ({ ...prev, bbt: e.target.value }))}
-                  placeholder="36.50"
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="modal-cramps">Cramps</label>
-                <select
-                  id="modal-cramps"
-                  value={modalMeasurements.cramps}
-                  onChange={(e) => setModalMeasurements(prev => ({ ...prev, cramps: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                >
-                  <option value="none">None</option>
-                  <option value="mild">Mild</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="severe">Severe</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="modal-soreBreasts">Sore Breasts</label>
-                <select
-                  id="modal-soreBreasts"
-                  value={modalMeasurements.soreBreasts}
-                  onChange={(e) => setModalMeasurements(prev => ({ ...prev, soreBreasts: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                >
-                  <option value="none">None</option>
-                  <option value="mild">Mild</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="severe">Severe</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 2,
-                    padding: '0.75rem',
-                    backgroundColor: '#8B0000',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Save Data
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CalendarModal
+        show={showModal}
+        date={modalDate}
+        existingData={groupedMeasurements[modalDate] || []}
+        onClose={() => setShowModal(false)}
+        onSave={handleModalSave}
+      />
     </div>
   );
 }

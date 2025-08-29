@@ -26,10 +26,16 @@ export async function importMeasurements(userId: string, file: File) {
       
       switch (measurement.type) {
         case 'period':
+          const validOptions = ['none', 'spotting', 'light', 'medium', 'heavy'];
+          if (!validOptions.includes(measurement.value.option)) {
+            console.error(`Invalid period option: ${measurement.value.option} for measurement ${measurement.id}`);
+            skipped++;
+            continue;
+          }
           convertedMeasurement = {
             type: 'period',
             date: measurement.date,
-            value: { option: measurement.value.option || 'medium' }
+            value: { option: measurement.value.option }
           };
           break;
           
