@@ -9,11 +9,10 @@ const dataService = new DataService();
 
 export default function Calendar() {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [groupedMeasurements, setGroupedMeasurements] = useState<Record<string, Measurement[]>>({});
-  
+
   // Initialize currentDate from URL parameters or default to now
   const [currentDate, setCurrentDate] = useState(() => {
     const yearParam = searchParams.get('year');
@@ -26,7 +25,7 @@ export default function Calendar() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState('');
@@ -55,12 +54,12 @@ export default function Calendar() {
 
   async function loadData() {
     if (!currentUser) return;
-    
+
     setLoading(true);
     try {
       const data = await dataService.getMeasurements(currentUser.uid);
       setMeasurements(data);
-      
+
       const grouped = data.reduce((acc, measurement) => {
         if (!acc[measurement.date]) {
           acc[measurement.date] = [];
@@ -68,13 +67,13 @@ export default function Calendar() {
         acc[measurement.date].push(measurement);
         return acc;
       }, {} as Record<string, Measurement[]>);
-      
+
       setGroupedMeasurements(grouped);
-      
+
       // Calculate predictions
       const pred = CycleService.predictNextCycle(data);
       setPrediction(pred);
-      
+
       // Calculate stats for multiple period predictions
       const cycleStats = CycleService.calculateCycleStats(data);
       setStats(cycleStats);
@@ -88,7 +87,7 @@ export default function Calendar() {
   function getDayColor(dateStr: string) {
     const dayMeasurements = groupedMeasurements[dateStr] || [];
     const periodMeasurement = dayMeasurements.find(m => m.type === 'period');
-    
+
     if (periodMeasurement) {
       const flow = (periodMeasurement.value as any).option;
       switch (flow) {
@@ -98,12 +97,12 @@ export default function Calendar() {
         default: return '#e0e0e0';
       }
     }
-    
+
     // Check for other measurements
     if (dayMeasurements.length > 0) {
       return '#e1bee7'; // Light purple for other data
     }
-    
+
     return 'transparent';
   }
 
@@ -112,7 +111,7 @@ export default function Calendar() {
     const period = dayMeasurements.find(m => m.type === 'period');
     const bbt = dayMeasurements.find(m => m.type === 'bbt');
     const symptoms = dayMeasurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
-    
+
     return {
       period: period ? (period.value as any).option : null,
       bbt: bbt ? (bbt.value as any).celsius : null,
@@ -126,15 +125,15 @@ export default function Calendar() {
     const firstDay = new Date(year, month, 1);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     const days = [];
     const current = new Date(startDate);
-    
+
     for (let i = 0; i < 42; i++) {
       days.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
-    
+
     return days;
   }
 
@@ -154,27 +153,27 @@ export default function Calendar() {
 
   function isPredictedPeriod(dateStr: string) {
     if (!prediction || !stats) return false;
-    
+
     const checkDate = new Date(dateStr);
     const firstPeriodDate = new Date(prediction.nextPeriod);
     const averageCycleLength = Math.round(stats.averageCycleLength);
     const averagePeriodLength = Math.round(stats.averagePeriodLength);
-    
+
     // Only calculate predictions if the date is in the future
     if (checkDate < firstPeriodDate) return false;
-    
+
     // Calculate which cycle this date might belong to
     const daysSinceFirstPrediction = Math.floor((checkDate.getTime() - firstPeriodDate.getTime()) / (1000 * 60 * 60 * 24));
     const cycleNumber = Math.floor(daysSinceFirstPrediction / averageCycleLength);
-    
+
     // Only calculate predictions for dates within a reasonable range (e.g., 3 years ahead)
     if (cycleNumber > 36) return false;
-    
+
     const periodStartDate = new Date(firstPeriodDate);
     periodStartDate.setDate(periodStartDate.getDate() + (cycleNumber * averageCycleLength));
-    
+
     const daysDiff = Math.floor((checkDate.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     // Check if date falls within this predicted period
     return daysDiff >= 0 && daysDiff < averagePeriodLength;
   }
@@ -199,21 +198,21 @@ export default function Calendar() {
 
   function handleDayClick(dateStr: string) {
     setModalDate(dateStr);
-    
+
     // Load existing data for this date if it exists
     const existingData = groupedMeasurements[dateStr] || [];
     const periodData = existingData.find(m => m.type === 'period');
     const bbtData = existingData.find(m => m.type === 'bbt');
     const crampsData = existingData.find(m => m.type === 'cramps');
     const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
-    
+
     setModalMeasurements({
       period: periodData ? (periodData.value as any).option : 'none',
       bbt: bbtData ? String((bbtData.value as any).celsius) : '',
       cramps: crampsData ? (crampsData.value as any).severity : 'none',
       soreBreasts: soreBreastsData ? (soreBreastsData.value as any).severity : 'none'
     });
-    
+
     setShowModal(true);
   }
 
@@ -257,10 +256,10 @@ export default function Calendar() {
       }
 
       await Promise.all(promises);
-      
+
       // Reload data to update the calendar
       await loadData();
-      
+
       // Close modal and reset form
       setShowModal(false);
       setModalMeasurements({
@@ -269,7 +268,7 @@ export default function Calendar() {
         cramps: 'none',
         soreBreasts: 'none'
       });
-      
+
       alert('Data saved!');
     } catch (error) {
       alert('Error saving data');
@@ -289,7 +288,7 @@ export default function Calendar() {
 
   const calendarDays = generateCalendar();
   const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  
+
   // Check if we're viewing the current month
   const now = new Date();
   const isCurrentMonth = currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
@@ -305,12 +304,12 @@ export default function Calendar() {
         </div>
 
         <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div style={{ 
-            width: '50px', 
-            height: '50px', 
-            border: '4px solid #ddd', 
-            borderTop: '4px solid #8B0000', 
-            borderRadius: '50%', 
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid #ddd',
+            borderTop: '4px solid #8B0000',
+            borderRadius: '50%',
             margin: '0 auto 1.5rem',
             animation: 'spin 1s linear infinite'
           }}></div>
@@ -338,7 +337,7 @@ export default function Calendar() {
 
       {/* Calendar Navigation */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <button 
+        <button
           onClick={() => navigateMonth(-1)}
           style={{ padding: '0.5rem 1rem', backgroundColor: '#8B0000', color: 'white', border: 'none', borderRadius: '4px' }}
         >
@@ -347,14 +346,14 @@ export default function Calendar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <h3 style={{ margin: 0 }}>{monthYear}</h3>
           {!isCurrentMonth && (
-            <button 
+            <button
               onClick={goToCurrentMonth}
-              style={{ 
-                padding: '0.5rem 1rem', 
-                backgroundColor: '#4682B4', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '4px', 
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#4682B4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -367,7 +366,7 @@ export default function Calendar() {
             </button>
           )}
         </div>
-        <button 
+        <button
           onClick={() => navigateMonth(1)}
           style={{ padding: '0.5rem 1rem', backgroundColor: '#8B0000', color: 'white', border: 'none', borderRadius: '4px' }}
         >
@@ -412,10 +411,10 @@ export default function Calendar() {
       </div>
 
       {/* Calendar Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        gap: '1px', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
+        gap: '1px',
         backgroundColor: '#ddd',
         border: '1px solid #ddd',
         borderRadius: '8px',
@@ -423,17 +422,17 @@ export default function Calendar() {
       }}>
         {/* Day headers */}
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} style={{ 
-            padding: '0.5rem', 
-            backgroundColor: '#f5f5f5', 
-            textAlign: 'center', 
+          <div key={day} style={{
+            padding: '0.5rem',
+            backgroundColor: '#f5f5f5',
+            textAlign: 'center',
             fontWeight: 'bold',
             fontSize: '0.8rem'
           }}>
             {day}
           </div>
         ))}
-        
+
         {/* Calendar days */}
         {calendarDays.map(day => {
           const dateStr = formatDate(day);
@@ -445,23 +444,23 @@ export default function Calendar() {
           const isPredOvulation = isPredictedOvulation(dateStr);
           const inFertileWindow = isInFertileWindow(dateStr);
           const todayMarker = isToday(dateStr);
-          
+
           let dayBackgroundColor = isCurrentMonth ? 'white' : '#f9f9f9';
           if (inFertileWindow && !hasData) {
             dayBackgroundColor = '#FFE4E1';
           }
           // Today uses border only, no background override
-          
+
           return (
-            <div 
+            <div
               key={dateStr}
               onClick={() => handleDayClick(dateStr)}
               style={{
                 padding: '0.5rem',
                 backgroundColor: dayBackgroundColor,
                 border: todayMarker ? '3px solid #4169E1' :
-                        hasData ? `2px solid ${backgroundColor}` : 
-                        inFertileWindow ? '1px solid #90EE90' : 'none',
+                  hasData ? `2px solid ${backgroundColor}` :
+                    inFertileWindow ? '1px solid #90EE90' : 'none',
                 minHeight: '60px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -470,8 +469,8 @@ export default function Calendar() {
                 cursor: 'pointer'
               }}
             >
-              <div style={{ 
-                fontSize: '0.8rem', 
+              <div style={{
+                fontSize: '0.8rem',
                 fontWeight: todayMarker ? 'bold' : (isCurrentMonth ? 'normal' : '300'),
                 marginBottom: '0.25rem',
                 color: todayMarker ? '#4169E1' : 'inherit'
@@ -479,14 +478,14 @@ export default function Calendar() {
                 {day.getDate()}
                 {todayMarker && <span style={{ fontSize: '0.6rem' }}> 📅</span>}
               </div>
-              
+
               <div style={{ fontSize: '0.6rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
                 {/* Predictions */}
                 {isPredPeriod && (
-                  <div style={{ 
-                    backgroundColor: '#FF69B4', 
-                    color: 'white', 
-                    padding: '1px 3px', 
+                  <div style={{
+                    backgroundColor: '#FF69B4',
+                    color: 'white',
+                    padding: '1px 3px',
                     borderRadius: '2px',
                     textAlign: 'center',
                     border: '1px dashed #8B0000'
@@ -495,35 +494,35 @@ export default function Calendar() {
                   </div>
                 )}
                 {isPredOvulation && (
-                  <div style={{ 
-                    backgroundColor: '#32CD32', 
-                    color: 'white', 
-                    padding: '1px 3px', 
+                  <div style={{
+                    backgroundColor: '#32CD32',
+                    color: 'white',
+                    padding: '1px 3px',
                     borderRadius: '2px',
                     textAlign: 'center'
                   }}>
                     🥚 Ovulation
                   </div>
                 )}
-                
+
                 {/* Actual Data */}
                 {hasData && (
                   <>
                     {dayData.period && (
-                      <div style={{ 
+                      <div style={{
                         textAlign: 'center',
                         fontSize: '12px',
                         lineHeight: '1'
                       }}>
-                        {dayData.period === 'heavy' ? '🩸🩸🩸' : 
-                         dayData.period === 'medium' ? '🩸🩸' : '🩸'}
+                        {dayData.period === 'heavy' ? '🩸🩸🩸' :
+                          dayData.period === 'medium' ? '🩸🩸' : '🩸'}
                       </div>
                     )}
                     {dayData.bbt && (
-                      <div style={{ 
-                        backgroundColor: '#2196f3', 
-                        color: 'white', 
-                        padding: '1px 3px', 
+                      <div style={{
+                        backgroundColor: '#2196f3',
+                        color: 'white',
+                        padding: '1px 3px',
                         borderRadius: '2px',
                         textAlign: 'center'
                       }}>
@@ -531,10 +530,10 @@ export default function Calendar() {
                       </div>
                     )}
                     {dayData.symptoms > 0 && (
-                      <div style={{ 
-                        backgroundColor: '#ff9800', 
-                        color: 'white', 
-                        padding: '1px 3px', 
+                      <div style={{
+                        backgroundColor: '#ff9800',
+                        color: 'white',
+                        padding: '1px 3px',
                         borderRadius: '2px',
                         textAlign: 'center',
                         fontSize: '0.5rem'
@@ -553,12 +552,12 @@ export default function Calendar() {
       {measurements.length === 0 && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p>No data recorded yet.</p>
-          <button 
+          <button
             onClick={() => handleDayClick(new Date().toISOString().split('T')[0])}
-            style={{ 
-              padding: '0.75rem 1.5rem', 
+            style={{
+              padding: '0.75rem 1.5rem',
               border: 'none',
-              backgroundColor: '#8B0000', 
+              backgroundColor: '#8B0000',
               color: 'white',
               borderRadius: '4px',
               cursor: 'pointer'
@@ -594,19 +593,19 @@ export default function Calendar() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ margin: 0 }}>
-                Log Data - {new Date(modalDate).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                Log Data - {new Date(modalDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </h3>
-              <button 
+              <button
                 onClick={handleModalClose}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  fontSize: '1.5rem', 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
                   cursor: 'pointer',
                   padding: '0.25rem',
                   color: '#666'
@@ -615,7 +614,7 @@ export default function Calendar() {
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handleModalSubmit}>
               <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="modal-period">Period Flow</label>
@@ -678,29 +677,29 @@ export default function Calendar() {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button 
+                <button
                   type="button"
                   onClick={handleModalClose}
-                  style={{ 
+                  style={{
                     flex: 1,
-                    padding: '0.75rem', 
-                    backgroundColor: '#6c757d', 
-                    color: 'white', 
-                    border: 'none', 
+                    padding: '0.75rem',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer'
                   }}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
-                  style={{ 
+                  style={{
                     flex: 2,
-                    padding: '0.75rem', 
-                    backgroundColor: '#8B0000', 
-                    color: 'white', 
-                    border: 'none', 
+                    padding: '0.75rem',
+                    backgroundColor: '#8B0000',
+                    color: 'white',
+                    border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer'
                   }}
