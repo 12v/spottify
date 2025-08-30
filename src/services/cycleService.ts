@@ -115,6 +115,57 @@ export class CycleService {
     return Math.sqrt(variance);
   }
 
+  static getCycleData(measurements: Measurement[]) {
+    const periodMeasurements = measurements
+      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (periodMeasurements.length < 2) return [];
+    
+    const cycles = this.extractCycles(periodMeasurements);
+    return cycles.map((cycle, index) => ({
+      cycleNumber: index + 1,
+      cycleLength: cycle.length,
+      periodLength: cycle.periodLength,
+      startDate: cycle.measurements[0].date
+    }));
+  }
+
+  static checkIncompleteData(measurements: Measurement[]): string[] {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    const recentMeasurements = measurements.filter(m => 
+      new Date(m.date) >= sixMonthsAgo && m.type === 'period'
+    );
+    
+    const alerts = [];
+    const monthsToCheck = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const checkDate = new Date();
+      checkDate.setMonth(checkDate.getMonth() - i);
+      monthsToCheck.push({
+        year: checkDate.getFullYear(),
+        month: checkDate.getMonth(),
+        name: checkDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      });
+    }
+    
+    for (const month of monthsToCheck) {
+      const monthData = recentMeasurements.filter(m => {
+        const date = new Date(m.date);
+        return date.getFullYear() === month.year && date.getMonth() === month.month;
+      });
+      
+      if (monthData.length > 0 && monthData.length < 3) {
+        alerts.push(`${month.name}: Only ${monthData.length} period day(s) recorded - may be incomplete`);
+      }
+    }
+    
+    return alerts;
+  }
+
   static getLastPeriodStart(measurements: Measurement[]): Date | null {
     const periodMeasurements = measurements
       .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)

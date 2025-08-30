@@ -1,10 +1,33 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { useAuth } from '../contexts/AuthContext';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import LoadingSpinner from './LoadingSpinner';
 import type { Measurement, CycleStats } from '../types';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function Statistics() {
   const { currentUser } = useAuth();
@@ -34,111 +57,169 @@ export default function Statistics() {
     }
   }
 
-  function getRecentMeasurements(type: string, days: number = 30) {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    return measurements.filter(m => 
-      m.type === type && 
-      new Date(m.date) >= cutoffDate
-    ).length;
-  }
+  const cycleData = CycleService.getCycleData(measurements);
+  const dataAlerts = CycleService.checkIncompleteData(measurements);
 
-  function getAverageBBT() {
-    const bbtMeasurements = measurements.filter(m => m.type === 'bbt');
-    if (bbtMeasurements.length === 0) return null;
-    
-    const sum = bbtMeasurements.reduce((total, m) => total + (m.value as any).celsius, 0);
-    return (sum / bbtMeasurements.length).toFixed(2);
-  }
+  // Prepare cycle length line chart
+  const cycleLengthChart = {
+    labels: cycleData.map((_, index) => `Cycle ${index + 1}`),
+    datasets: [
+      {
+        label: 'Cycle Length (days)',
+        data: cycleData.map(cycle => cycle.cycleLength),
+        borderColor: '#8B0000',
+        backgroundColor: 'rgba(139, 0, 0, 0.1)',
+        tension: 0.2,
+      }
+    ]
+  };
+
+  // Prepare period length line chart
+  const periodLengthChart = {
+    labels: cycleData.map((_, index) => `Cycle ${index + 1}`),
+    datasets: [
+      {
+        label: 'Period Length (days)',
+        data: cycleData.map(cycle => cycle.periodLength),
+        borderColor: '#A52A2A',
+        backgroundColor: 'rgba(165, 42, 42, 0.1)',
+        tension: 0.2,
+      }
+    ]
+  };
+
+  // Prepare cycle length histogram
+  const cycleLengthCounts = cycleData.reduce((acc, cycle) => {
+    acc[cycle.cycleLength] = (acc[cycle.cycleLength] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
+  const cycleLengthHistogram = {
+    labels: Object.keys(cycleLengthCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+    datasets: [
+      {
+        label: 'Number of Cycles',
+        data: Object.keys(cycleLengthCounts)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .map(key => cycleLengthCounts[parseInt(key)]),
+        backgroundColor: 'rgba(139, 0, 0, 0.6)',
+        borderColor: '#8B0000',
+        borderWidth: 1,
+      }
+    ]
+  };
+
+  // Prepare period length histogram
+  const periodLengthCounts = cycleData.reduce((acc, cycle) => {
+    acc[cycle.periodLength] = (acc[cycle.periodLength] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
+  const periodLengthHistogram = {
+    labels: Object.keys(periodLengthCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+    datasets: [
+      {
+        label: 'Number of Periods',
+        data: Object.keys(periodLengthCounts)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .map(key => periodLengthCounts[parseInt(key)]),
+        backgroundColor: 'rgba(165, 42, 42, 0.6)',
+        borderColor: '#A52A2A',
+        borderWidth: 1,
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        }
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <div className="page-container" style={{ maxWidth: '600px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="page-container" style={{ maxWidth: '800px' }}>
+        <div className="header-row">
           <h2>Statistics</h2>
-          <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
-            ← Dashboard
-          </Link>
+          <Link to="/" className="back-link">← Dashboard</Link>
         </div>
-
         <LoadingSpinner message="Calculating statistics..." />
-
       </div>
     );
   }
 
   return (
-    <div className="page-container" style={{ maxWidth: '600px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>Statistics</h2>
-        <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
-          ← Dashboard
-        </Link>
+    <div className="page-container" style={{ maxWidth: '800px' }}>
+      <div className="header-row">
+        <h2>Statistics & Analytics</h2>
+        <Link to="/" className="back-link">← Dashboard</Link>
       </div>
 
-      {!stats ? (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>Not enough data for statistics. Record at least 2 complete cycles to see insights.</p>
+      {dataAlerts.length > 0 && (
+        <div className="alert warning">
+          <strong>⚠️ Data Quality Alerts:</strong>
+          <ul>
+            {dataAlerts.map((alert, index) => (
+              <li key={index}>{alert}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {cycleData.length === 0 ? (
+        <div className="content-box disabled">
+          <p style={{ textAlign: 'center', margin: '2rem 0' }}>
+            Not enough data for analytics. Record at least 2 complete cycles to see charts and insights.
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '1rem' }}>
-            <h3>Cycle Statistics</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div>
-                <strong>Average Cycle Length:</strong> {Math.round(stats.averageCycleLength)} days
-              </div>
-              <div>
-                <strong>Cycle Variation:</strong> ±{Math.round(stats.cycleVariation)} days
-              </div>
-              <div>
-                <strong>Average Period Length:</strong> {Math.round(stats.averagePeriodLength)} days
-              </div>
-            </div>
-          </div>
-
-          <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '1rem' }}>
-            <h3>Recent Activity (Last 30 Days)</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div>
-                <strong>Period Days:</strong> {getRecentMeasurements('period')}
-              </div>
-              <div>
-                <strong>BBT Recordings:</strong> {getRecentMeasurements('bbt')}
-              </div>
-              <div>
-                <strong>Cramps Reported:</strong> {getRecentMeasurements('cramps')}
-              </div>
-              <div>
-                <strong>Sore Breasts Reported:</strong> {getRecentMeasurements('sore_breasts')}
-              </div>
-            </div>
-          </div>
-
-          {getAverageBBT() && (
-            <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '1rem' }}>
-              <h3>Temperature</h3>
-              <div>
-                <strong>Average BBT:</strong> {getAverageBBT()}°C
+        <div>
+          {stats && (
+            <div className="content-box">
+              <h3>Summary Statistics</h3>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <div><strong>Average Cycle Length:</strong> {Math.round(stats.averageCycleLength)} days</div>
+                <div><strong>Cycle Variation:</strong> ±{Math.round(stats.cycleVariation)} days</div>
+                <div><strong>Average Period Length:</strong> {Math.round(stats.averagePeriodLength)} days</div>
+                <div><strong>Total Cycles Analyzed:</strong> {cycleData.length}</div>
+                <div><strong>Data Range:</strong> {
+                  cycleData.length > 0 
+                    ? `${new Date(cycleData[0].startDate).toLocaleDateString()} - ${new Date(cycleData[cycleData.length - 1].startDate).toLocaleDateString()}`
+                    : 'No data'
+                }</div>
               </div>
             </div>
           )}
 
-          <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '1rem' }}>
-            <h3>Data Summary</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div>
-                <strong>Total Records:</strong> {measurements.length}
-              </div>
-              <div>
-                <strong>Date Range:</strong> {
-                  measurements.length > 0 
-                    ? `${new Date(measurements[measurements.length - 1].date).toLocaleDateString()} - ${new Date(measurements[0].date).toLocaleDateString()}`
-                    : 'No data'
-                }
-              </div>
-            </div>
+          <div className="chart">
+            <h3>Cycle Length Over Time</h3>
+            <Line data={cycleLengthChart} options={chartOptions} />
+          </div>
+          
+          <div className="chart">
+            <h3>Cycle Length Distribution</h3>
+            <Bar data={cycleLengthHistogram} options={chartOptions} />
+          </div>
+          
+          <div className="chart">
+            <h3>Period Length Over Time</h3>
+            <Line data={periodLengthChart} options={chartOptions} />
+          </div>
+          
+          <div className="chart">
+            <h3>Period Length Distribution</h3>
+            <Bar data={periodLengthHistogram} options={chartOptions} />
           </div>
         </div>
       )}
