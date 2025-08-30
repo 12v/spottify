@@ -17,10 +17,10 @@ interface CalendarModalProps {
 
 export default function CalendarModal({ show, date, existingData, onClose, onSave }: CalendarModalProps) {
   const [measurements, setMeasurements] = useState({
-    period: PERIOD_OPTIONS.NONE,
+    period: PERIOD_OPTIONS.NONE as string,
     bbt: '',
-    cramps: SYMPTOM_SEVERITY.NONE,
-    soreBreasts: SYMPTOM_SEVERITY.NONE
+    cramps: SYMPTOM_SEVERITY.NONE as string,
+    soreBreasts: SYMPTOM_SEVERITY.NONE as string
   });
 
   useEffect(() => {
@@ -47,10 +47,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
 
   function handleClose() {
     setMeasurements({
-      period: PERIOD_OPTIONS.NONE,
+      period: PERIOD_OPTIONS.NONE as string,
       bbt: '',
-      cramps: SYMPTOM_SEVERITY.NONE,
-      soreBreasts: SYMPTOM_SEVERITY.NONE
+      cramps: SYMPTOM_SEVERITY.NONE as string,
+      soreBreasts: SYMPTOM_SEVERITY.NONE as string
     });
     onClose();
   }
@@ -65,54 +65,25 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
   });
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '8px',
-        maxWidth: '500px',
-        width: '90%',
-        maxHeight: '80vh',
-        overflow: 'auto'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
           <h3 style={{ margin: 0 }}>
             Log Data - {formattedDate}
           </h3>
-          <button
-            onClick={handleClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              padding: '0.25rem',
-              color: '#666'
-            }}
-          >
+          <button onClick={handleClose} className="modal-close">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
             <label htmlFor="modal-period">Period Flow</label>
             <select
               id="modal-period"
               value={measurements.period}
               onChange={(e) => setMeasurements(prev => ({ ...prev, period: e.target.value }))}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+              className="form-input"
             >
               <option value={PERIOD_OPTIONS.NONE}>None</option>
               <option value={PERIOD_OPTIONS.SPOTTING}>Spotting</option>
@@ -122,7 +93,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
             </select>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
             <label htmlFor="modal-bbt">Basal Body Temperature (°C)</label>
             <input
               type="number"
@@ -133,17 +104,17 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               value={measurements.bbt}
               onChange={(e) => setMeasurements(prev => ({ ...prev, bbt: e.target.value }))}
               placeholder="36.50"
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+              className="form-input"
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
             <label htmlFor="modal-cramps">Cramps</label>
             <select
               id="modal-cramps"
               value={measurements.cramps}
               onChange={(e) => setMeasurements(prev => ({ ...prev, cramps: e.target.value }))}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+              className="form-input"
             >
               <option value={SYMPTOM_SEVERITY.NONE}>None</option>
               <option value={SYMPTOM_SEVERITY.MILD}>Mild</option>
@@ -152,13 +123,13 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
             </select>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
             <label htmlFor="modal-soreBreasts">Sore Breasts</label>
             <select
               id="modal-soreBreasts"
               value={measurements.soreBreasts}
               onChange={(e) => setMeasurements(prev => ({ ...prev, soreBreasts: e.target.value }))}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+              className="form-input"
             >
               <option value={SYMPTOM_SEVERITY.NONE}>None</option>
               <option value={SYMPTOM_SEVERITY.MILD}>Mild</option>
@@ -167,34 +138,11 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
             </select>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-            <button
-              type="button"
-              onClick={handleClose}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+          <div className="form-actions">
+            <button type="button" onClick={handleClose} className="btn-secondary">
               Cancel
             </button>
-            <button
-              type="submit"
-              style={{
-                flex: 2,
-                padding: '0.75rem',
-                backgroundColor: '#8B0000',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+            <button type="submit" className="btn-primary">
               Save Data
             </button>
           </div>

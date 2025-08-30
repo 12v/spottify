@@ -117,12 +117,12 @@ export default function Calendar() {
       <div className="page-container" style={{ maxWidth: '900px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h2 style={{ margin: 0 }}>📅 Calendar</h2>
-          <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
+          <Link to="/" className="back-link">
             ← Dashboard
           </Link>
         </div>
 
-        <LoadingSpinner message="Loading calendar data..." size="large" />
+        <LoadingSpinner message="Loading calendar data..." />
 
       </div>
     );

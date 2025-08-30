@@ -11,19 +11,10 @@ import type { Measurement, Prediction } from '../types';
 
 function NavigationGrid({ measurements, handleExport, loading = false }: { measurements: Measurement[], handleExport: () => void, loading?: boolean }) {
   return (
-    <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+    <div className="nav-grid">
       <Link 
         to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
-        style={{ 
-          padding: '2rem', 
-          border: '1px solid #ddd', 
-          borderRadius: '4px', 
-          textDecoration: 'none', 
-          textAlign: 'center',
-          color: 'inherit',
-          opacity: loading ? 0.7 : 1,
-          pointerEvents: loading ? 'none' : 'auto'
-        }}
+        className={`nav-card ${loading ? 'disabled' : ''}`}
       >
         <h3>Log Today</h3>
         <p>Record today's data</p>
@@ -31,16 +22,7 @@ function NavigationGrid({ measurements, handleExport, loading = false }: { measu
 
       <Link 
         to="/calendar" 
-        style={{ 
-          padding: '2rem', 
-          border: '1px solid #ddd', 
-          borderRadius: '4px', 
-          textDecoration: 'none', 
-          textAlign: 'center',
-          color: 'inherit',
-          opacity: loading ? 0.7 : 1,
-          pointerEvents: loading ? 'none' : 'auto'
-        }}
+        className={`nav-card ${loading ? 'disabled' : ''}`}
       >
         <h3>Calendar</h3>
         <p>View & input cycle data</p>
@@ -48,16 +30,7 @@ function NavigationGrid({ measurements, handleExport, loading = false }: { measu
 
       <Link 
         to="/statistics" 
-        style={{ 
-          padding: '2rem', 
-          border: '1px solid #ddd', 
-          borderRadius: '4px', 
-          textDecoration: 'none', 
-          textAlign: 'center',
-          color: 'inherit',
-          opacity: loading ? 0.7 : 1,
-          pointerEvents: loading ? 'none' : 'auto'
-        }}
+        className={`nav-card ${loading ? 'disabled' : ''}`}
       >
         <h3>Statistics</h3>
         <p>Cycle insights and averages</p>
@@ -65,17 +38,7 @@ function NavigationGrid({ measurements, handleExport, loading = false }: { measu
 
       <Link 
         to="/import" 
-        style={{ 
-          padding: '2rem', 
-          border: '1px solid #8B0000', 
-          borderRadius: '4px', 
-          textDecoration: 'none', 
-          textAlign: 'center',
-          color: 'inherit',
-          backgroundColor: '#f8f0f0',
-          opacity: loading ? 0.7 : 1,
-          pointerEvents: loading ? 'none' : 'auto'
-        }}
+        className={`nav-card import ${loading ? 'disabled' : ''}`}
       >
         <h3>📥 Import Data</h3>
         <p>Import historical data</p>
@@ -84,16 +47,7 @@ function NavigationGrid({ measurements, handleExport, loading = false }: { measu
       <button 
         onClick={handleExport}
         disabled={loading || !measurements.length}
-        style={{ 
-          padding: '2rem', 
-          border: '1px solid #28a745', 
-          borderRadius: '4px', 
-          textAlign: 'center',
-          color: 'inherit',
-          backgroundColor: (!loading && measurements.length) ? '#f0f8f0' : '#f5f5f5',
-          cursor: (!loading && measurements.length) ? 'pointer' : 'not-allowed',
-          opacity: (!loading && measurements.length) ? 1 : 0.6
-        }}
+        className="nav-card export"
       >
         <h3>📤 Export Data</h3>
         <p>Download your data</p>
@@ -168,14 +122,14 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="page-container" style={{ maxWidth: '600px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ margin: 0, minWidth: '120px' }}>Spottify</h1>
-          <button onClick={logout} style={{ padding: '0.5rem 1rem', flexShrink: 0 }}>
+        <div className="header-row">
+          <h1>Spottify</h1>
+          <button onClick={logout} className="btn">
             Logout
           </button>
         </div>
 
-        <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #eee', borderRadius: '4px', minHeight: '120px' }}>
+        <div className="content-box loading">
           <LoadingSpinner message="Loading your cycle data..." />
         </div>
         
@@ -187,9 +141,9 @@ export default function Dashboard() {
 
   return (
     <div className="page-container" style={{ maxWidth: '600px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0, minWidth: '120px' }}>Spottify</h1>
-        <button onClick={logout} style={{ padding: '0.5rem 1rem', flexShrink: 0 }}>
+      <div className="header-row">
+        <h1>Spottify</h1>
+        <button onClick={logout} className="btn">
           Logout
         </button>
       </div>
@@ -205,7 +159,7 @@ export default function Dashboard() {
 
 
       {prediction ? (
-        <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '4px' }}>
+        <div className="content-box">
           <h3>Predictions</h3>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             <div>
@@ -222,7 +176,7 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #eee', borderRadius: '4px', minHeight: '120px', opacity: '0.5' }}>
+        <div className="content-box disabled">
           <div style={{ textAlign: 'center', color: '#999', padding: '2rem 0' }}>
             <p>Not enough data for predictions.<br/>Record at least 2 complete cycles to see insights.</p>
           </div>

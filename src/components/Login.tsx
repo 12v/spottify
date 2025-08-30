@@ -62,68 +62,55 @@ export default function Login() {
   }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: 'white' }}>
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>
-          {isReset ? '🔑 Reset Password' : (isLogin ? '👋 Welcome Back' : '🌸 Create Account')}
-        </h2>
-        <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-          {isReset ? 'Enter your email to receive reset instructions' : 
-           (isLogin ? 'Sign in to track your cycle' : 'Start tracking your period today')}
-        </p>
-      </div>
-      
-      {error && <div style={{ color: 'red', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#ffebee', borderRadius: '4px' }}>{error}</div>}
-      {message && <div style={{ color: 'green', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>{message}</div>}
-      
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: '0.25rem', color: '#333' }}>Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.75rem', marginTop: '0.25rem', border: '1px solid #ddd', borderRadius: '4px' }}
-          />
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-title">
+          <h2 style={{ margin: '0 0 0.5rem 0' }}>
+            {isReset ? '🔑 Reset Password' : (isLogin ? '👋 Welcome Back' : '🌸 Create Account')}
+          </h2>
+          <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
+            {isReset ? 'Enter your email to receive reset instructions' : 
+             (isLogin ? 'Sign in to track your cycle' : 'Start tracking your period today')}
+          </p>
         </div>
         
-        {!isReset && (
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.25rem', color: '#333' }}>Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.75rem', marginTop: '0.25rem', border: '1px solid #ddd', borderRadius: '4px' }}
-            />
-            {!isLogin && <p style={{ fontSize: '12px', color: '#666', margin: '0.25rem 0 0 0' }}>Must be at least 6 characters</p>}
-          </div>
-        )}
-        
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ 
-            width: '100%', 
-            padding: '0.75rem', 
-            marginBottom: '1.5rem',
-            backgroundColor: isLogin ? '#8B0000' : '#2F4F4F',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }}
-        >
-          {loading ? 'Loading...' : (isReset ? '📧 Send Reset Email' : (isLogin ? '🔑 Sign In' : '✨ Create Account'))}
-        </button>
-      </form>
+        {error && <div className="auth-message error">{error}</div>}
+        {message && <div className="auth-message success">{message}</div>}
       
-      <div style={{ textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div>
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="auth-input"
+            />
+          </div>
+          
+          {!isReset && (
+            <div>
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="auth-input"
+              />
+              {!isLogin && <p style={{ fontSize: '12px', color: '#666', margin: '0.25rem 0 0 0' }}>Must be at least 6 characters</p>}
+            </div>
+          )}
+        
+          <button type="submit" disabled={loading} className="auth-button">
+            {loading ? 'Loading...' : (isReset ? '📧 Send Reset Email' : (isLogin ? '🔑 Sign In' : '✨ Create Account'))}
+          </button>
+        </form>
+        
+        <div className="auth-links">
         {!isReset ? (
           <>
             <button 
@@ -135,17 +122,7 @@ export default function Login() {
                 setEmail('');
                 setPassword('');
               }}
-              style={{ 
-                background: 'linear-gradient(45deg, #8B0000, #A52A2A)', 
-                border: 'none', 
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                padding: '0.5rem 1rem',
-                borderRadius: '20px',
-                fontWeight: 'bold',
-                marginRight: '0.5rem'
-              }}
+              className="auth-button"
             >
               {isLogin ? '👤 Create New Account' : '🔙 Back to Sign In'}
             </button>
@@ -159,14 +136,7 @@ export default function Login() {
                   setMessage('');
                   setPassword('');
                 }}
-                style={{ 
-                  background: 'none',
-                  border: 'none',
-                  color: '#666',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  textDecoration: 'underline'
-                }}
+                className="auth-button secondary"
               >
                 Forgot Password?
               </button>
@@ -181,18 +151,12 @@ export default function Login() {
               setError('');
               setMessage('');
             }}
-            style={{ 
-              background: 'none',
-              border: 'none',
-              color: '#8B0000',
-              cursor: 'pointer',
-              fontSize: '14px',
-              textDecoration: 'underline'
-            }}
+            className="auth-button secondary"
           >
             ← Back to Sign In
           </button>
         )}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
-import type { Measurement, CycleStats, MeasurementType } from '../types';
+import type { Measurement, CycleStats } from '../types';
 
 export function useCycleData() {
   const { currentUser } = useAuth();
@@ -40,7 +40,7 @@ export function useCycleData() {
     }
   }
 
-  async function saveMeasurement(date: string, type: MeasurementType, value: any) {
+  async function saveMeasurement(date: string, type: string, value: any) {
     if (!currentUser) return;
 
     try {
@@ -61,7 +61,7 @@ export function useCycleData() {
           }));
         }
       } else if (type === 'bbt' && value) {
-        promises.push(dataService.addMeasurement(currentUser.uid, {
+        promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
           type,
           date,
           value: { celsius: parseFloat(value) }
