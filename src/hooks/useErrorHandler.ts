@@ -52,24 +52,12 @@ export function useErrorHandler() {
 }
 
 function getDefaultMessage(errorMessage: string): string {
-  if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
-    return 'Unable to connect. Please check your internet connection and try again.';
-  }
-  
   if (errorMessage.includes('permission-denied')) {
     return 'You do not have permission to perform this action.';
   }
   
   if (errorMessage.includes('unauthenticated')) {
     return 'Your session has expired. Please log in again.';
-  }
-  
-  if (errorMessage.includes('quota-exceeded')) {
-    return 'Storage quota exceeded. Please try again later.';
-  }
-  
-  if (errorMessage.includes('invalid') || errorMessage.includes('validation')) {
-    return 'The data you entered is invalid. Please check your input and try again.';
   }
   
   return 'An unexpected error occurred. Please try again.';

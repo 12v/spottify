@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { dataService } from '../services';
+import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
 import type { Measurement, CycleStats, MeasurementType } from '../types';
@@ -17,7 +17,7 @@ export function useCycleData() {
 
     setLoading(true);
     try {
-      const data = await dataService.getMeasurements(currentUser.uid);
+      const data = await DataService.getInstance().getMeasurements(currentUser.uid);
       setMeasurements(data);
 
       const grouped = data.reduce((acc, measurement) => {
@@ -51,10 +51,10 @@ export function useCycleData() {
       if (type === 'period' || type === 'cramps' || type === 'sore_breasts') {
         if (value === PERIOD_OPTIONS.NONE || value === SYMPTOM_SEVERITY.NONE) {
           if (existing) {
-            promises.push(dataService.deleteMeasurement(currentUser.uid, existing.id));
+            promises.push(DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id));
           }
         } else {
-          promises.push(dataService.addMeasurement(currentUser.uid, {
+          promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
             type,
             date,
             value: type === 'period' ? { option: value } : { severity: value }

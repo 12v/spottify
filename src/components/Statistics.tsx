@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { dataService } from '../services';
+import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import LoadingSpinner from './LoadingSpinner';
 import type { Measurement, CycleStats } from '../types';
@@ -23,7 +23,7 @@ export default function Statistics() {
     
     setLoading(true);
     try {
-      const data = await dataService.getMeasurements(currentUser.uid);
+      const data = await DataService.getInstance().getMeasurements(currentUser.uid);
       setMeasurements(data);
       const cycleStats = CycleService.calculateCycleStats(data);
       setStats(cycleStats);
