@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
 import type { Measurement } from '../types';
 
 interface CalendarModalProps {
@@ -16,10 +17,10 @@ interface CalendarModalProps {
 
 export default function CalendarModal({ show, date, existingData, onClose, onSave }: CalendarModalProps) {
   const [measurements, setMeasurements] = useState({
-    period: 'none',
+    period: PERIOD_OPTIONS.NONE,
     bbt: '',
-    cramps: 'none',
-    soreBreasts: 'none'
+    cramps: SYMPTOM_SEVERITY.NONE,
+    soreBreasts: SYMPTOM_SEVERITY.NONE
   });
 
   useEffect(() => {
@@ -30,10 +31,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
 
       setMeasurements({
-        period: periodData ? (periodData.value as any).option : 'none',
+        period: periodData ? (periodData.value as any).option : PERIOD_OPTIONS.NONE,
         bbt: bbtData ? String((bbtData.value as any).celsius) : '',
-        cramps: crampsData ? (crampsData.value as any).severity : 'none',
-        soreBreasts: soreBreastsData ? (soreBreastsData.value as any).severity : 'none'
+        cramps: crampsData ? (crampsData.value as any).severity : SYMPTOM_SEVERITY.NONE,
+        soreBreasts: soreBreastsData ? (soreBreastsData.value as any).severity : SYMPTOM_SEVERITY.NONE
       });
     }
   }, [show, existingData]);
@@ -46,10 +47,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
 
   function handleClose() {
     setMeasurements({
-      period: 'none',
+      period: PERIOD_OPTIONS.NONE,
       bbt: '',
-      cramps: 'none',
-      soreBreasts: 'none'
+      cramps: SYMPTOM_SEVERITY.NONE,
+      soreBreasts: SYMPTOM_SEVERITY.NONE
     });
     onClose();
   }
@@ -113,11 +114,11 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               onChange={(e) => setMeasurements(prev => ({ ...prev, period: e.target.value }))}
               style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
             >
-              <option value="none">None</option>
-              <option value="spotting">Spotting</option>
-              <option value="light">Light</option>
-              <option value="medium">Medium</option>
-              <option value="heavy">Heavy</option>
+              <option value={PERIOD_OPTIONS.NONE}>None</option>
+              <option value={PERIOD_OPTIONS.SPOTTING}>Spotting</option>
+              <option value={PERIOD_OPTIONS.LIGHT}>Light</option>
+              <option value={PERIOD_OPTIONS.MEDIUM}>Medium</option>
+              <option value={PERIOD_OPTIONS.HEAVY}>Heavy</option>
             </select>
           </div>
 
@@ -144,10 +145,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               onChange={(e) => setMeasurements(prev => ({ ...prev, cramps: e.target.value }))}
               style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
             >
-              <option value="none">None</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
+              <option value={SYMPTOM_SEVERITY.NONE}>None</option>
+              <option value={SYMPTOM_SEVERITY.MILD}>Mild</option>
+              <option value={SYMPTOM_SEVERITY.MODERATE}>Moderate</option>
+              <option value={SYMPTOM_SEVERITY.SEVERE}>Severe</option>
             </select>
           </div>
 
@@ -159,10 +160,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               onChange={(e) => setMeasurements(prev => ({ ...prev, soreBreasts: e.target.value }))}
               style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
             >
-              <option value="none">None</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
+              <option value={SYMPTOM_SEVERITY.NONE}>None</option>
+              <option value={SYMPTOM_SEVERITY.MILD}>Mild</option>
+              <option value={SYMPTOM_SEVERITY.MODERATE}>Moderate</option>
+              <option value={SYMPTOM_SEVERITY.SEVERE}>Severe</option>
             </select>
           </div>
 

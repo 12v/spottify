@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { DataService } from '../services/dataService';
+import { dataService } from '../services';
 import { CycleService } from '../services/cycleService';
+import LoadingSpinner from './LoadingSpinner';
 import type { Measurement, CycleStats } from '../types';
-
-const dataService = new DataService();
 
 export default function Statistics() {
   const { currentUser } = useAuth();
@@ -63,25 +62,8 @@ export default function Statistics() {
           </Link>
         </div>
 
-        <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            border: '3px solid #ddd', 
-            borderTop: '3px solid #8B0000', 
-            borderRadius: '50%', 
-            margin: '0 auto 1rem',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <p>Calculating statistics...</p>
-        </div>
+        <LoadingSpinner message="Calculating statistics..." />
 
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }

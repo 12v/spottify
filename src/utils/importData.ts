@@ -1,5 +1,6 @@
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { PERIOD_OPTIONS } from './constants';
 import type { Measurement } from '../types';
 
 interface RawMeasurement {
@@ -21,12 +22,11 @@ export async function importMeasurements(userId: string, file: File) {
   
   for (const measurement of measurements) {
     try {
-      // Convert the measurement to our format
       let convertedMeasurement: Omit<Measurement, 'id'>;
       
       switch (measurement.type) {
         case 'period':
-          const validOptions = ['none', 'spotting', 'light', 'medium', 'heavy'];
+          const validOptions = Object.values(PERIOD_OPTIONS);
           if (!validOptions.includes(measurement.value.option)) {
             console.error(`Invalid period option: ${measurement.value.option} for measurement ${measurement.id}`);
             skipped++;
@@ -53,12 +53,10 @@ export async function importMeasurements(userId: string, file: File) {
           break;
           
         default:
-          // Skip types we don't support (energy, exercise, feelings, mind, etc.)
           skipped++;
           continue;
       }
       
-      // Add to Firestore
       await addDoc(measurementsCollection, {
         ...convertedMeasurement,
         userId,

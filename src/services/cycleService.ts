@@ -1,17 +1,18 @@
 import type { Measurement, CycleStats, Prediction } from '../types';
 import { formatLocalDate } from '../utils/dateUtils';
+import { CYCLE_CONSTANTS, TIME_CONSTANTS, PERIOD_OPTIONS } from '../utils/constants';
 
 export class CycleService {
   static calculateCycleStats(measurements: Measurement[]): CycleStats {
     const periodMeasurements = measurements
-      .filter(m => m.type === 'period' && (m.value as any).option !== 'none')
+      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    if (periodMeasurements.length < 2) {
+    if (periodMeasurements.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
       return {
-        averageCycleLength: 28,
+        averageCycleLength: CYCLE_CONSTANTS.DEFAULT_CYCLE_LENGTH,
         cycleVariation: 0,
-        averagePeriodLength: 5
+        averagePeriodLength: CYCLE_CONSTANTS.DEFAULT_PERIOD_LENGTH
       };
     }
 
@@ -33,25 +34,30 @@ export class CycleService {
     
     if (!lastPeriodStart) {
       const today = new Date();
+      const defaultCycleDays = CYCLE_CONSTANTS.DEFAULT_CYCLE_LENGTH * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
+      const ovulationDays = CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
+      const fertileStartDays = (CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION - CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
+      const fertileEndDays = (CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION + CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
+      
       return {
-        nextPeriod: formatLocalDate(new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000)),
-        ovulation: formatLocalDate(new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)),
+        nextPeriod: formatLocalDate(new Date(today.getTime() + defaultCycleDays)),
+        ovulation: formatLocalDate(new Date(today.getTime() + ovulationDays)),
         fertileWindow: {
-          start: formatLocalDate(new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000)),
-          end: formatLocalDate(new Date(today.getTime() + 16 * 24 * 60 * 60 * 1000))
+          start: formatLocalDate(new Date(today.getTime() + fertileStartDays)),
+          end: formatLocalDate(new Date(today.getTime() + fertileEndDays))
         }
       };
     }
 
-    const nextPeriodDate = new Date(lastPeriodStart.getTime() + stats.averageCycleLength * 24 * 60 * 60 * 1000);
-    const ovulationDate = new Date(nextPeriodDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const nextPeriodDate = new Date(lastPeriodStart.getTime() + stats.averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const ovulationDate = new Date(nextPeriodDate.getTime() - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     
     return {
       nextPeriod: formatLocalDate(nextPeriodDate),
       ovulation: formatLocalDate(ovulationDate),
       fertileWindow: {
-        start: formatLocalDate(new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000)),
-        end: formatLocalDate(new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000))
+        start: formatLocalDate(new Date(ovulationDate.getTime() - CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY)),
+        end: formatLocalDate(new Date(ovulationDate.getTime() + CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY))
       }
     };
   }
@@ -64,9 +70,8 @@ export class CycleService {
     let weightedSum = 0;
     let totalWeight = 0;
 
-    // More recent values get higher weights (exponential decay)
     for (let i = 0; i < values.length; i++) {
-      const weight = Math.pow(0.8, values.length - 1 - i); // More recent = higher weight
+      const weight = Math.pow(0.8, values.length - 1 - i);
       weightedSum += values[i] * weight;
       totalWeight += weight;
     }
@@ -81,16 +86,16 @@ export class CycleService {
     for (let i = 1; i < periodMeasurements.length; i++) {
       const current = new Date(periodMeasurements[i].date);
       const previous = new Date(periodMeasurements[i - 1].date);
-      const daysDiff = Math.floor((current.getTime() - previous.getTime()) / (24 * 60 * 60 * 1000));
+      const daysDiff = Math.floor((current.getTime() - previous.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
-      if (daysDiff > 7) { // New cycle started
+      if (daysDiff > CYCLE_CONSTANTS.MINIMUM_GAP_BETWEEN_PERIODS_DAYS) {
         const cycleEnd = i - 1;
         const cycleData = periodMeasurements.slice(currentCycleStart, cycleEnd + 1);
         const cycleStartDate = new Date(cycleData[0].date);
         const cycleEndDate = new Date(periodMeasurements[i].date);
         
         cycles.push({
-          length: Math.floor((cycleEndDate.getTime() - cycleStartDate.getTime()) / (24 * 60 * 60 * 1000)),
+          length: Math.floor((cycleEndDate.getTime() - cycleStartDate.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY),
           periodLength: cycleData.length,
           measurements: cycleData
         });
@@ -112,26 +117,23 @@ export class CycleService {
 
   static getLastPeriodStart(measurements: Measurement[]): Date | null {
     const periodMeasurements = measurements
-      .filter(m => m.type === 'period' && (m.value as any).option !== 'none')
+      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     if (periodMeasurements.length === 0) return null;
 
-    // Find the start of the most recent period by looking for gaps
     let periodStart = periodMeasurements[0].date;
     
     for (let i = 1; i < periodMeasurements.length; i++) {
       const currentDate = new Date(periodMeasurements[i - 1].date);
       const nextDate = new Date(periodMeasurements[i].date);
-      const daysDiff = Math.floor((currentDate.getTime() - nextDate.getTime()) / (24 * 60 * 60 * 1000));
+      const daysDiff = Math.floor((currentDate.getTime() - nextDate.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
       
-      // If there's a gap of more than 1 day, we've found the start of the current period
       if (daysDiff > 1) {
         break;
       }
       periodStart = periodMeasurements[i].date;
     }
-
 
     return new Date(periodStart);
   }

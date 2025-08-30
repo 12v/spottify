@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCycleData } from '../hooks/useCycleData';
 import { useCyclePredictions } from '../hooks/useCyclePredictions';
 import { formatLocalDate } from '../utils/dateUtils';
+import LoadingSpinner from './LoadingSpinner';
 import CalendarModal from './CalendarModal';
 import CalendarDay from './CalendarDay';
 
@@ -11,7 +12,6 @@ export default function Calendar() {
   const [searchParams] = useSearchParams();
   const { measurements, groupedMeasurements, stats, loading, saveMeasurement } = useCycleData();
   
-  // Initialize currentDate from URL parameters or default to now
   const [currentDate, setCurrentDate] = useState(() => {
     const yearParam = searchParams.get('year');
     const monthParam = searchParams.get('month');
@@ -21,13 +21,11 @@ export default function Calendar() {
     return new Date();
   });
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState('');
 
   const predictions = useCyclePredictions(measurements, stats);
 
-  // Auto-open modal if requested via URL parameter
   useEffect(() => {
     const openModal = searchParams.get('openModal');
     const dateParam = searchParams.get('date');
@@ -35,7 +33,6 @@ export default function Calendar() {
     if (openModal === 'true' && dateParam && !showModal && !loading) {
       handleDayClick(dateParam);
       
-      // Clean up URL parameters
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('openModal');
       newSearchParams.delete('date');
@@ -46,7 +43,7 @@ export default function Calendar() {
   }, [searchParams, showModal, loading, navigate]);
 
 
-  function generateCalendar() {
+  const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -77,42 +74,43 @@ export default function Calendar() {
     }
 
     return days;
-  }
+  }, [currentDate]);
 
-  function navigateMonth(direction: number) {
+  const navigateMonth = useCallback((direction: number) => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + direction);
     setCurrentDate(newDate);
-  }
+  }, [currentDate]);
 
-  function goToCurrentMonth() {
+  const goToCurrentMonth = useCallback(() => {
     setCurrentDate(new Date());
-  }
+  }, []);
 
-  function handleDayClick(dateStr: string) {
+  const handleDayClick = useCallback((dateStr: string) => {
     setModalDate(dateStr);
     setShowModal(true);
-  }
+  }, []);
 
-  async function handleModalSave(modalMeasurements: {
+  const handleModalSave = useCallback(async (modalMeasurements: {
     period: string;
     bbt: string;
     cramps: string;
     soreBreasts: string;
-  }) {
-    // Save each measurement type individually
+  }) => {
     await saveMeasurement(modalDate, 'period', modalMeasurements.period);
     await saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt);
     await saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps);
     await saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts);
-  }
+  }, [modalDate, saveMeasurement]);
 
-  const calendarDays = generateCalendar();
-  const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthYear = useMemo(() => 
+    currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  , [currentDate]);
 
-  // Check if we're viewing the current month
-  const now = new Date();
-  const isCurrentMonth = currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
+  const isCurrentMonth = useMemo(() => {
+    const now = new Date();
+    return currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
+  }, [currentDate]);
 
   if (loading) {
     return (
@@ -124,25 +122,8 @@ export default function Calendar() {
           </Link>
         </div>
 
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            border: '4px solid #ddd',
-            borderTop: '4px solid #8B0000',
-            borderRadius: '50%',
-            margin: '0 auto 1.5rem',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <p>Loading calendar data...</p>
-        </div>
+        <LoadingSpinner message="Loading calendar data..." size="large" />
 
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }

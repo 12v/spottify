@@ -1,3 +1,5 @@
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from './utils/constants';
+
 export interface Measurement {
   id: string;
   date: string;
@@ -8,12 +10,12 @@ export interface Measurement {
 export type MeasurementType = 'period' | 'bbt' | 'cramps' | 'sore_breasts';
 
 export type MeasurementValue = 
-  | { option: 'none' | 'spotting' | 'light' | 'medium' | 'heavy' } // period
+  | { option: typeof PERIOD_OPTIONS[keyof typeof PERIOD_OPTIONS] } // period
   | { celsius: number } // bbt
-  | { severity: 'none' | 'mild' | 'moderate' | 'severe' } // cramps/sore_breasts
+  | { severity: typeof SYMPTOM_SEVERITY[keyof typeof SYMPTOM_SEVERITY] } // cramps/sore_breasts
 
 export interface PeriodValue {
-  option: 'none' | 'spotting' | 'light' | 'medium' | 'heavy';
+  option: typeof PERIOD_OPTIONS[keyof typeof PERIOD_OPTIONS];
 }
 
 export interface BBTValue {
@@ -21,7 +23,7 @@ export interface BBTValue {
 }
 
 export interface SymptomValue {
-  severity: 'none' | 'mild' | 'moderate' | 'severe';
+  severity: typeof SYMPTOM_SEVERITY[keyof typeof SYMPTOM_SEVERITY];
 }
 
 export interface CycleStats {

@@ -3,7 +3,17 @@ import { db } from '../firebase';
 import type { Measurement } from '../types';
 
 export class DataService {
+  private static instance: DataService;
   private collection = collection(db, 'measurements');
+
+  private constructor() {}
+
+  static getInstance(): DataService {
+    if (!DataService.instance) {
+      DataService.instance = new DataService();
+    }
+    return DataService.instance;
+  }
 
   async addMeasurement(userId: string, measurement: Omit<Measurement, 'id'>): Promise<string> {
     const docRef = await addDoc(this.collection, {
@@ -42,7 +52,7 @@ export class DataService {
     } as Measurement));
   }
 
-  async deleteMeasurement(userId: string, measurementId: string): Promise<void> {
+  async deleteMeasurement(_userId: string, measurementId: string): Promise<void> {
     const docRef = doc(db, 'measurements', measurementId);
     await deleteDoc(docRef);
   }

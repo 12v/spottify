@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { DataService } from '../services/dataService';
+import { dataService } from '../services';
 import { CycleService } from '../services/cycleService';
 import { formatLocalDate, formatDisplayDate } from '../utils/dateUtils';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorMessage from './ErrorMessage';
 import type { Measurement, Prediction } from '../types';
-
-const dataService = new DataService();
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
+  const { error, handleError, clearError, retry } = useErrorHandler();
 
   useEffect(() => {
     if (currentUser) {
@@ -25,24 +27,28 @@ export default function Dashboard() {
     
     setLoading(true);
     try {
+      clearError();
       const data = await dataService.getMeasurements(currentUser.uid);
       setMeasurements(data);
       const pred = CycleService.predictNextCycle(data);
       setPrediction(pred);
-    } catch (error) {
-      console.error('Error loading data:', error);
+    } catch (loadError) {
+      handleError(loadError as Error, 'Failed to load your cycle data. Please try again.', loadData);
     } finally {
       setLoading(false);
     }
   }
 
+  const [exportSuccess, setExportSuccess] = useState(false);
+
   async function handleExport() {
     if (!currentUser || measurements.length === 0) {
-      alert('No data to export');
+      handleError('No data available to export. Please add some measurements first.');
       return;
     }
 
     try {
+      clearError();
       const exportData = {
         exportDate: formatLocalDate(new Date()),
         userId: currentUser.uid,
@@ -61,10 +67,10 @@ export default function Dashboard() {
       document.body.removeChild(link);
       
       URL.revokeObjectURL(url);
-      alert('Data exported successfully!');
-    } catch (error) {
-      alert('Error exporting data');
-      console.error('Export error:', error);
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000); // Auto-hide after 3 seconds
+    } catch (exportError) {
+      handleError(exportError as Error, 'Failed to export data. Please try again.');
     }
   }
 
@@ -87,40 +93,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Reserve space for predictions section - match loaded state structure */}
-        <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #eee', borderRadius: '4px', position: 'relative' }}>
-          <div style={{ visibility: 'hidden' }}>
-            <h3>Predictions</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div>
-                <strong>Next Period:</strong> ••••-••-•• (•• days)
-              </div>
-              <div>
-                <strong>Ovulation:</strong> ••••-••-••(•• days)
-              </div>
-              <div>
-                <strong>Fertile Window:</strong> ••••-••-•• - ••••-••-••
-              </div>
-            </div>
-          </div>
-          <div style={{ 
-            position: 'absolute', 
-            top: '50%', 
-            left: '50%', 
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center'
-          }}>
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              border: '3px solid #ddd', 
-              borderTop: '3px solid #8B0000', 
-              borderRadius: '50%', 
-              margin: '0 auto 1rem',
-              animation: 'spin 1s linear infinite'
-            }}></div>
-            <p>Loading your cycle data...</p>
-          </div>
+        <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #eee', borderRadius: '4px', minHeight: '120px' }}>
+          <LoadingSpinner message="Loading your cycle data..." />
         </div>
         
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
@@ -205,12 +179,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -223,6 +191,37 @@ export default function Dashboard() {
           Logout
         </button>
       </div>
+
+      {error.hasError && (
+        <ErrorMessage 
+          message={error.message} 
+          details={error.details}
+          onRetry={retry}
+          onDismiss={clearError}
+        />
+      )}
+
+      {exportSuccess && (
+        <div style={{
+          padding: '1rem',
+          border: '1px solid #28a745',
+          borderRadius: '8px',
+          backgroundColor: '#d4edda',
+          color: '#155724',
+          margin: '1rem 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span>✅ Data exported successfully!</span>
+          <button 
+            onClick={() => setExportSuccess(false)}
+            style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#155724' }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {prediction ? (
         <div style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '4px' }}>

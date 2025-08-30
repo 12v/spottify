@@ -1,0 +1,28 @@
+export const CYCLE_CONSTANTS = {
+  DEFAULT_CYCLE_LENGTH: 28,
+  DEFAULT_PERIOD_LENGTH: 5,
+  DAYS_BEFORE_PERIOD_FOR_OVULATION: 14,
+  FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION: 5,
+  FERTILE_WINDOW_END_DAYS_AFTER_OVULATION: 1,
+  MINIMUM_GAP_BETWEEN_PERIODS_DAYS: 7,
+  MINIMUM_CYCLES_FOR_PREDICTIONS: 2,
+} as const;
+
+export const TIME_CONSTANTS = {
+  MILLISECONDS_PER_DAY: 24 * 60 * 60 * 1000,
+} as const;
+
+export const PERIOD_OPTIONS = {
+  NONE: 'none',
+  SPOTTING: 'spotting',
+  LIGHT: 'light',
+  MEDIUM: 'medium',
+  HEAVY: 'heavy',
+} as const;
+
+export const SYMPTOM_SEVERITY = {
+  NONE: 'none',
+  MILD: 'mild',
+  MODERATE: 'moderate',
+  SEVERE: 'severe',
+} as const;

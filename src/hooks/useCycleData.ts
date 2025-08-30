@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { DataService } from '../services/dataService';
+import { dataService } from '../services';
 import { CycleService } from '../services/cycleService';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
 import type { Measurement, CycleStats, MeasurementType } from '../types';
-
-const dataService = new DataService();
 
 export function useCycleData() {
   const { currentUser } = useAuth();
@@ -47,11 +46,10 @@ export function useCycleData() {
     try {
       const promises = [];
 
-      // Handle measurement deletion for 'none' values
       const existing = groupedMeasurements[date]?.find(m => m.type === type);
       
       if (type === 'period' || type === 'cramps' || type === 'sore_breasts') {
-        if (value === 'none') {
+        if (value === PERIOD_OPTIONS.NONE || value === SYMPTOM_SEVERITY.NONE) {
           if (existing) {
             promises.push(dataService.deleteMeasurement(currentUser.uid, existing.id));
           }
@@ -71,7 +69,7 @@ export function useCycleData() {
       }
 
       await Promise.all(promises);
-      await loadData(); // Reload data
+      await loadData();
     } catch (error) {
       console.error('Error saving data:', error);
     }

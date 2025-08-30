@@ -1,3 +1,5 @@
+import { memo } from 'react';
+import { PERIOD_OPTIONS } from '../utils/constants';
 import type { Measurement } from '../types';
 
 interface CalendarDayProps {
@@ -10,7 +12,7 @@ interface CalendarDayProps {
   onClick: () => void;
 }
 
-export default function CalendarDay({
+function CalendarDay({
   day,
   measurements,
   isPredPeriod,
@@ -26,17 +28,16 @@ export default function CalendarDay({
     if (periodMeasurement) {
       const flow = (periodMeasurement.value as any).option;
       switch (flow) {
-        case 'heavy': return '#d32f2f';
-        case 'medium': return '#f57c00';
-        case 'light': return '#fbc02d';
-        case 'spotting': return '#ffb74d';
+        case PERIOD_OPTIONS.HEAVY: return '#d32f2f';
+        case PERIOD_OPTIONS.MEDIUM: return '#f57c00';
+        case PERIOD_OPTIONS.LIGHT: return '#fbc02d';
+        case PERIOD_OPTIONS.SPOTTING: return '#ffb74d';
         default: 
           console.error(`Unknown period flow type: ${flow}`);
           return 'transparent';
       }
     }
 
-    // Check for other measurements
     if (measurements.length > 0) {
       return '#e1bee7'; // Light purple for other data
     }
@@ -62,30 +63,26 @@ export default function CalendarDay({
 
   let dayBackgroundColor = 'white';
 
-  // Fertile window (only if no period data)
   if (inFertileWindow && !hasData && !dayData.period && !isPredPeriod) {
     dayBackgroundColor = '#F0FFF0';
   }
 
-  // Predicted period (light pink)
   if (isPredPeriod && !dayData.period) {
     dayBackgroundColor = '#FFE4E1';
   }
 
-  // Actual period days (color coded by flow intensity, except spotting)
   if (dayData.period) {
     switch (dayData.period) {
-      case 'heavy':
+      case PERIOD_OPTIONS.HEAVY:
         dayBackgroundColor = '#ff3535ff'; // Bright dark red
         break;
-      case 'medium':
+      case PERIOD_OPTIONS.MEDIUM:
         dayBackgroundColor = '#f75555ff'; // Bright medium red
         break;
-      case 'light':
+      case PERIOD_OPTIONS.LIGHT:
         dayBackgroundColor = '#f89090ff'; // Darker light red
         break;
-      case 'spotting':
-        // No background color for spotting
+      case PERIOD_OPTIONS.SPOTTING:
         break;
     }
   }
@@ -111,13 +108,12 @@ export default function CalendarDay({
         fontWeight: todayMarker ? 'bold' : 'normal',
         marginBottom: '0.25rem',
         color: todayMarker ? '#4169E1' :
-          (dayData.period === 'heavy' || dayData.period === 'medium') ? 'white' : 'inherit'
+          (dayData.period === PERIOD_OPTIONS.HEAVY || dayData.period === PERIOD_OPTIONS.MEDIUM) ? 'white' : 'inherit'
       }}>
         {day.getDate()}
       </div>
 
       <div style={{ fontSize: '0.6rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
-        {/* Predictions */}
         {isPredOvulation && (
           <div style={{
             textAlign: 'center',
@@ -128,7 +124,6 @@ export default function CalendarDay({
           </div>
         )}
 
-        {/* Actual Data */}
         {hasData && (
           <>
             {dayData.period && (
@@ -169,3 +164,5 @@ export default function CalendarDay({
     </div>
   );
 }
+
+export default memo(CalendarDay);

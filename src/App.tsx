@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Calendar from './components/Calendar';
@@ -19,35 +20,49 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Router basename="/spottify">
-        <div className="app">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            } />
-            <Route path="/calendar" element={
-              <PrivateRoute>
-                <Calendar />
-              </PrivateRoute>
-            } />
-            <Route path="/statistics" element={
-              <PrivateRoute>
-                <Statistics />
-              </PrivateRoute>
-            } />
-            <Route path="/import" element={
-              <PrivateRoute>
-                <ImportData />
-              </PrivateRoute>
-            } />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router basename="/spottify" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <div className="app">
+            <Routes>
+              <Route path="/login" element={
+                <ErrorBoundary>
+                  <Login />
+                </ErrorBoundary>
+              } />
+              <Route path="/" element={
+                <ErrorBoundary>
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              } />
+              <Route path="/calendar" element={
+                <ErrorBoundary>
+                  <PrivateRoute>
+                    <Calendar />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              } />
+              <Route path="/statistics" element={
+                <ErrorBoundary>
+                  <PrivateRoute>
+                    <Statistics />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              } />
+              <Route path="/import" element={
+                <ErrorBoundary>
+                  <PrivateRoute>
+                    <ImportData />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              } />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
