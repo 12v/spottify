@@ -68,7 +68,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3 style={{ margin: 0 }}>
+          <h3 className="modal-title">
             Log Data - {formattedDate}
           </h3>
           <button onClick={handleClose} className="modal-close">
@@ -85,7 +85,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
                 className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.NONE ? 'selected' : ''}`}
                 onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.NONE }))}
               >
-                <div className="period-preview" style={{ backgroundColor: 'white', border: '1px solid #ddd' }}></div>
+                <div className="period-preview period-none"></div>
                 <span>None</span>
               </button>
               <button
@@ -93,7 +93,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
                 className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.SPOTTING ? 'selected' : ''}`}
                 onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.SPOTTING }))}
               >
-                <div className="period-preview" style={{ backgroundColor: 'white', border: '1px solid #ccc' }}></div>
+                <div className="period-preview period-spotting"></div>
                 <span>Spotting</span>
               </button>
               <button
@@ -101,7 +101,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
                 className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.LIGHT ? 'selected' : ''}`}
                 onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.LIGHT }))}
               >
-                <div className="period-preview" style={{ backgroundColor: '#f89090ff' }}></div>
+                <div className="period-preview period-light"></div>
                 <span>Light</span>
               </button>
               <button
@@ -109,7 +109,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
                 className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.MEDIUM ? 'selected' : ''}`}
                 onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.MEDIUM }))}
               >
-                <div className="period-preview" style={{ backgroundColor: '#f75555ff' }}></div>
+                <div className="period-preview period-medium"></div>
                 <span>Medium</span>
               </button>
               <button
@@ -117,7 +117,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
                 className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.HEAVY ? 'selected' : ''}`}
                 onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.HEAVY }))}
               >
-                <div className="period-preview" style={{ backgroundColor: '#ff3535ff' }}></div>
+                <div className="period-preview period-heavy"></div>
                 <span>Heavy</span>
               </button>
             </div>

@@ -503,3 +503,29 @@ body {
   font-weight: 500;
   color: #333;
 }
+
+.modal-title {
+  margin: 0;
+}
+
+.period-none {
+  background-color: white;
+  border: 1px solid #ddd;
+}
+
+.period-spotting {
+  background-color: white;
+  border: 1px solid #ccc;
+}
+
+.period-light {
+  background-color: #f89090ff;
+}
+
+.period-medium {
+  background-color: #f75555ff;
+}
+
+.period-heavy {
+  background-color: #ff3535ff;
+}
