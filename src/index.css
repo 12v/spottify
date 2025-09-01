@@ -18,40 +18,127 @@ body {
   min-height: 100vh;
 }
 
-/* Navigation cards */
-.nav-card {
-  padding: 2rem;
+/* Action grid */
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.main-action {
+  padding: 1rem;
+  border: 2px solid #8B0000;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  color: #8B0000;
+  background: white;
+  transition: all 0.2s;
+}
+
+.main-action:hover {
+  background: #8B0000;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+}
+
+.main-action h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.main-action p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.secondary-action {
+  grid-column: span 1;
+  padding: 0.6rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   text-decoration: none;
   text-align: center;
-  color: inherit;
-  display: block;
-}
-
-.nav-card:hover {
+  color: #666;
   background-color: #f8f8f8;
+  font-size: 0.85rem;
+  transition: all 0.2s;
 }
 
-.nav-card.disabled {
-  opacity: 0.7;
+.secondary-action:hover {
+  background-color: #8B0000;
+  color: white;
+  border-color: #8B0000;
+}
+
+.secondary-action.disabled {
+  opacity: 0.5;
   pointer-events: none;
 }
 
-.nav-card.import {
-  border-color: #8B0000;
-  background-color: #f8f0f0;
+.secondary-action:nth-child(3) {
+  grid-row: 2;
+  grid-column: 1;
 }
 
-.nav-card.export {
-  border-color: #28a745;
-  background-color: #f0f8f0;
+.secondary-action:nth-child(4) {
+  grid-row: 2;
+  grid-column: 2;
 }
 
-.nav-card.export:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
-  opacity: 0.6;
+.secondary-action:nth-child(5) {
+  grid-row: 3;
+  grid-column: 2;
+}
+
+/* Prediction cards */
+.prediction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.prediction-card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  background: white;
+  border: 1px solid #ddd;
+}
+
+.countdown {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #8B0000;
+  margin-bottom: 0.25rem;
+}
+
+.countdown-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.prediction-card .date {
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0;
+}
+
+.fertile-window {
+  padding-top: 0.5rem;
+}
+
+.fertile-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
 }
 
 /* Grid layouts */
@@ -188,14 +275,18 @@ body {
   align-items: center;
   padding: 0.5rem 1rem;
   text-decoration: none;
-  color: inherit;
+  color: #8B0000;
+  background-color: #f8f8f8;
   border: 1px solid #ddd;
   border-radius: 4px;
-  background-color: white;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .back-link:hover {
-  background-color: #f8f8f8;
+  background-color: #8B0000;
+  color: white;
+  border-color: #8B0000;
 }
 
 .nav-button {
@@ -351,4 +442,64 @@ body {
 
 .alert li {
   margin-bottom: 0.25rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .secondary-action:nth-child(5) {
+    grid-column: span 1;
+  }
+
+  .prediction-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Period flow selector */
+.period-flow-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.period-rectangle {
+  flex: 1 1 85px;
+  min-width: 85px;
+  max-width: 85px;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.period-rectangle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.period-rectangle.selected {
+  border-color: #8B0000;
+  box-shadow: 0 0 0 1px #8B0000;
+}
+
+.period-preview {
+  width: 30px;
+  height: 20px;
+  border-radius: 3px;
+}
+
+.period-rectangle span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
 }

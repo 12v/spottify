@@ -78,19 +78,49 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="modal-period">Period Flow</label>
-            <select
-              id="modal-period"
-              value={measurements.period}
-              onChange={(e) => setMeasurements(prev => ({ ...prev, period: e.target.value }))}
-              className="form-input"
-            >
-              <option value={PERIOD_OPTIONS.NONE}>None</option>
-              <option value={PERIOD_OPTIONS.SPOTTING}>Spotting</option>
-              <option value={PERIOD_OPTIONS.LIGHT}>Light</option>
-              <option value={PERIOD_OPTIONS.MEDIUM}>Medium</option>
-              <option value={PERIOD_OPTIONS.HEAVY}>Heavy</option>
-            </select>
+            <label>Period Flow</label>
+            <div className="period-flow-selector">
+              <button
+                type="button"
+                className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.NONE ? 'selected' : ''}`}
+                onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.NONE }))}
+              >
+                <div className="period-preview" style={{ backgroundColor: 'white', border: '1px solid #ddd' }}></div>
+                <span>None</span>
+              </button>
+              <button
+                type="button"
+                className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.SPOTTING ? 'selected' : ''}`}
+                onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.SPOTTING }))}
+              >
+                <div className="period-preview" style={{ backgroundColor: 'white', border: '1px solid #ccc' }}></div>
+                <span>Spotting</span>
+              </button>
+              <button
+                type="button"
+                className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.LIGHT ? 'selected' : ''}`}
+                onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.LIGHT }))}
+              >
+                <div className="period-preview" style={{ backgroundColor: '#f89090ff' }}></div>
+                <span>Light</span>
+              </button>
+              <button
+                type="button"
+                className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.MEDIUM ? 'selected' : ''}`}
+                onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.MEDIUM }))}
+              >
+                <div className="period-preview" style={{ backgroundColor: '#f75555ff' }}></div>
+                <span>Medium</span>
+              </button>
+              <button
+                type="button"
+                className={`period-rectangle ${measurements.period === PERIOD_OPTIONS.HEAVY ? 'selected' : ''}`}
+                onClick={() => setMeasurements(prev => ({ ...prev, period: PERIOD_OPTIONS.HEAVY }))}
+              >
+                <div className="period-preview" style={{ backgroundColor: '#ff3535ff' }}></div>
+                <span>Heavy</span>
+              </button>
+            </div>
           </div>
 
           <div className="form-group">

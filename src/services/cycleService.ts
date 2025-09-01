@@ -159,7 +159,7 @@ export class CycleService {
       });
       
       if (monthData.length > 0 && monthData.length < 3) {
-        alerts.push(`${month.name}: Only ${monthData.length} period day(s) recorded - may be incomplete`);
+        alerts.push(`${month.name}: Only ${monthData.length} period day(s) logged. Period may be incomplete - consider reviewing your data.`);
       }
     }
     

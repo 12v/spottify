@@ -168,7 +168,7 @@ export default function Statistics() {
 
       {dataAlerts.length > 0 && (
         <div className="alert warning">
-          <strong>⚠️ Data Quality Alerts:</strong>
+          <strong>⚠️ Incomplete Period Data:</strong>
           <ul>
             {dataAlerts.map((alert, index) => (
               <li key={index}>{alert}</li>

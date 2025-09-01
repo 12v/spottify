@@ -52,6 +52,14 @@ export async function importMeasurements(userId: string, file: File) {
           }
           break;
           
+        case 'spotting':
+          convertedMeasurement = {
+            type: 'period',
+            date: measurement.date,
+            value: { option: 'spotting' }
+          };
+          break;
+          
         default:
           skipped++;
           continue;

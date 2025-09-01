@@ -9,53 +9,6 @@ import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import type { Measurement, Prediction } from '../types';
 
-function NavigationGrid({ measurements, handleExport, loading = false }: { measurements: Measurement[], handleExport: () => void, loading?: boolean }) {
-  return (
-    <div className="nav-grid">
-      <Link 
-        to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
-        className={`nav-card ${loading ? 'disabled' : ''}`}
-      >
-        <h3>Log Today</h3>
-        <p>Record today's data</p>
-      </Link>
-
-      <Link 
-        to="/calendar" 
-        className={`nav-card ${loading ? 'disabled' : ''}`}
-      >
-        <h3>Calendar</h3>
-        <p>View & input cycle data</p>
-      </Link>
-
-      <Link 
-        to="/statistics" 
-        className={`nav-card ${loading ? 'disabled' : ''}`}
-      >
-        <h3>Statistics</h3>
-        <p>Cycle insights and averages</p>
-      </Link>
-
-      <Link 
-        to="/import" 
-        className={`nav-card import ${loading ? 'disabled' : ''}`}
-      >
-        <h3>📥 Import Data</h3>
-        <p>Import historical data</p>
-      </Link>
-
-      <button 
-        onClick={handleExport}
-        disabled={loading || !measurements.length}
-        className="nav-card export"
-      >
-        <h3>📤 Export Data</h3>
-        <p>Download your data</p>
-      </button>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const [prediction, setPrediction] = useState<Prediction | null>(null);
@@ -86,7 +39,6 @@ export default function Dashboard() {
     }
   }
 
-
   async function handleExport() {
     if (!currentUser || measurements.length === 0) {
       handleError('No data available to export. Please add some measurements first.');
@@ -112,11 +64,39 @@ export default function Dashboard() {
     }
   }
 
-
   function getDaysUntil(dateStr: string) {
     const target = new Date(dateStr);
     const today = new Date();
     return Math.ceil((target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  }
+
+  function formatCountdown(days: number, type: 'period' | 'ovulation') {
+    if (days < 0) {
+      const daysPast = Math.abs(days);
+      if (type === 'period') {
+        return {
+          number: daysPast,
+          label: daysPast === 1 ? 'day late' : 'days late'
+        };
+      } else {
+        return {
+          number: daysPast,
+          label: daysPast === 1 ? 'day since ovulation' : 'days since ovulation'
+        };
+      }
+    } else if (days === 0) {
+      return {
+        number: 'Today',
+        label: type === 'period' ? 'period starts' : 'ovulation'
+      };
+    } else {
+      return {
+        number: days,
+        label: type === 'period' 
+          ? (days === 1 ? 'day until period' : 'days until period')
+          : (days === 1 ? 'day until ovulation' : 'days until ovulation')
+      };
+    }
   }
 
   if (loading) {
@@ -124,17 +104,11 @@ export default function Dashboard() {
       <div className="page-container" style={{ maxWidth: '600px' }}>
         <div className="header-row">
           <h1>Spottify</h1>
-          <button onClick={logout} className="btn">
-            Logout
-          </button>
+          <button onClick={logout} className="btn">Logout</button>
         </div>
-
         <div className="content-box loading">
           <LoadingSpinner message="Loading your cycle data..." />
         </div>
-        
-        <NavigationGrid measurements={measurements} handleExport={handleExport} loading={true} />
-
       </div>
     );
   }
@@ -143,9 +117,7 @@ export default function Dashboard() {
     <div className="page-container" style={{ maxWidth: '600px' }}>
       <div className="header-row">
         <h1>Spottify</h1>
-        <button onClick={logout} className="btn">
-          Logout
-        </button>
+        <button onClick={logout} className="btn">Logout</button>
       </div>
 
       {error.hasError && (
@@ -157,33 +129,78 @@ export default function Dashboard() {
         />
       )}
 
-
       {prediction ? (
-        <div className="content-box">
-          <h3>Predictions</h3>
-          <div style={{ display: 'grid', gap: '0.5rem' }}>
-            <div>
-              <strong>Next Period:</strong> {formatDisplayDate(prediction.nextPeriod)} 
-              ({getDaysUntil(prediction.nextPeriod)} days)
-            </div>
-            <div>
-              <strong>Ovulation:</strong> {formatDisplayDate(prediction.ovulation)}
-              ({getDaysUntil(prediction.ovulation)} days)
-            </div>
-            <div>
-              <strong>Fertile Window:</strong> {formatDisplayDate(prediction.fertileWindow.start)} - {formatDisplayDate(prediction.fertileWindow.end)}
+        <div className="prediction-grid">
+          <div className="prediction-card">
+            {(() => {
+              const days = getDaysUntil(prediction.nextPeriod);
+              const countdown = formatCountdown(days, 'period');
+              return (
+                <>
+                  <div className="countdown">{countdown.number}</div>
+                  <div className="countdown-label">{countdown.label}</div>
+                  <div className="date">{formatDisplayDate(prediction.nextPeriod)}</div>
+                </>
+              );
+            })()}
+          </div>
+          <div className="prediction-card">
+            {(() => {
+              const days = getDaysUntil(prediction.ovulation);
+              const countdown = formatCountdown(days, 'ovulation');
+              return (
+                <>
+                  <div className="countdown">{countdown.number}</div>
+                  <div className="countdown-label">{countdown.label}</div>
+                  <div className="date">{formatDisplayDate(prediction.ovulation)}</div>
+                </>
+              );
+            })()}
+          </div>
+          <div className="prediction-card">
+            <div className="fertile-window">
+              <div className="fertile-label">Fertile Window</div>
+              <div className="date">{formatDisplayDate(prediction.fertileWindow.start)} - {formatDisplayDate(prediction.fertileWindow.end)}</div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="content-box disabled">
-          <div style={{ textAlign: 'center', color: '#999', padding: '2rem 0' }}>
-            <p>Not enough data for predictions.<br/>Record at least 2 complete cycles to see insights.</p>
-          </div>
+        <div className="getting-started">
+          <h3>Getting Started</h3>
+          <p>Record at least 2 complete cycles to see predictions and insights.</p>
         </div>
       )}
 
-      <NavigationGrid measurements={measurements} handleExport={handleExport} />
+      <div className="action-grid">
+        <Link 
+          to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
+          className="main-action"
+        >
+          <h3>Log Today</h3>
+          <p>Record period, symptoms, BBT</p>
+        </Link>
+
+        <Link to="/calendar" className="main-action">
+          <h3>Calendar</h3>
+          <p>View monthly cycle data</p>
+        </Link>
+
+        <Link to="/statistics" className="secondary-action">
+          Analytics
+        </Link>
+        
+        <Link to="/import" className="secondary-action">
+          Import
+        </Link>
+        
+        <button 
+          onClick={handleExport}
+          disabled={!measurements.length}
+          className={`secondary-action ${!measurements.length ? 'disabled' : ''}`}
+        >
+          Export
+        </button>
+      </div>
     </div>
   );
 }
