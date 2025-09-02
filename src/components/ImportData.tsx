@@ -6,7 +6,7 @@ import { importMeasurements } from '../utils/importData';
 export default function ImportData() {
   const { currentUser } = useAuth();
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{ imported: number; skipped: number; duplicates: number } | null>(null);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -51,6 +51,10 @@ export default function ImportData() {
         <Link to="/" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
           ← Dashboard
         </Link>
+      </div>
+      <div className="alert warning" style={{ marginBottom: '1.5rem' }}>
+        <strong>⚠️ Important:</strong> This will add to your existing data, not replace it. 
+        Duplicate entries for the same date will be automatically skipped.
       </div>
       <p style={{ color: '#666', fontSize: '14px', marginBottom: '1.5rem' }}>
         Upload a JSON file containing your period and BBT data. 
@@ -110,8 +114,9 @@ export default function ImportData() {
           marginBottom: '1rem'
         }}>
           ✅ Import complete! <br/>
-          Imported: {result.imported} records<br/>
-          Skipped: {result.skipped} records
+          Imported: {result.imported} new records<br/>
+          Skipped: {result.skipped} invalid records<br/>
+          {result.duplicates > 0 && `Duplicates avoided: ${result.duplicates} records`}
         </div>
       )}
       

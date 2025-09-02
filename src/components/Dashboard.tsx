@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cleanupRun, setCleanupRun] = useState(false);
   const { error, handleError, clearError, retry } = useErrorHandler();
 
   useEffect(() => {
@@ -28,10 +29,23 @@ export default function Dashboard() {
     setLoading(true);
     try {
       clearError();
-      const data = await DataService.getInstance().getMeasurements(currentUser.uid);
+      const dataService = DataService.getInstance();
+      
+      const data = await dataService.getMeasurements(currentUser.uid);
       setMeasurements(data);
       const pred = CycleService.predictNextCycle(data);
       setPrediction(pred);
+      
+      if (!cleanupRun) {
+        dataService.removeDuplicates(currentUser.uid).then(cleanupResult => {
+          if (cleanupResult.removed > 0) {
+            console.log(`Background cleanup removed ${cleanupResult.removed} duplicate measurements`);
+          }
+        }).catch(err => {
+          console.error('Background cleanup failed:', err);
+        });
+        setCleanupRun(true);
+      }
     } catch (loadError) {
       handleError(loadError as Error, 'Failed to load your cycle data. Please try again.', loadData);
     } finally {

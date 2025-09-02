@@ -1,6 +1,7 @@
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { PERIOD_OPTIONS } from './constants';
+import { DataService } from '../services/dataService';
 import type { Measurement } from '../types';
 
 interface RawMeasurement {
@@ -14,18 +15,25 @@ export async function importMeasurements(userId: string, file: File) {
   const fileText = await file.text();
   const measurements = JSON.parse(fileText) as RawMeasurement[];
   const measurementsCollection = collection(db, 'measurements');
+  const dataService = DataService.getInstance();
   
   console.log(`Starting import of ${measurements.length} measurements...`);
   
+  const existingMeasurements = await dataService.getMeasurements(userId);
+  const existingKeys = new Set(
+    existingMeasurements.map(m => `${m.date}-${m.type}`)
+  );
+  
   let imported = 0;
   let skipped = 0;
+  let duplicates = 0;
   
   for (const measurement of measurements) {
     try {
       let convertedMeasurement: Omit<Measurement, 'id'>;
       
       switch (measurement.type) {
-        case 'period':
+        case 'period': {
           const validOptions = Object.values(PERIOD_OPTIONS);
           if (!validOptions.includes(measurement.value.option)) {
             console.error(`Invalid period option: ${measurement.value.option} for measurement ${measurement.id}`);
@@ -38,6 +46,7 @@ export async function importMeasurements(userId: string, file: File) {
             value: { option: measurement.value.option }
           };
           break;
+        }
           
         case 'bbt':
           if (measurement.value.celsius) {
@@ -65,6 +74,12 @@ export async function importMeasurements(userId: string, file: File) {
           continue;
       }
       
+      const duplicateKey = `${convertedMeasurement.date}-${convertedMeasurement.type}`;
+      if (existingKeys.has(duplicateKey)) {
+        duplicates++;
+        continue;
+      }
+      
       await addDoc(measurementsCollection, {
         ...convertedMeasurement,
         userId,
@@ -83,6 +98,6 @@ export async function importMeasurements(userId: string, file: File) {
     }
   }
   
-  console.log(`Import complete! Imported: ${imported}, Skipped: ${skipped}`);
-  return { imported, skipped };
+  console.log(`Import complete! Imported: ${imported}, Skipped: ${skipped}, Duplicates: ${duplicates}`);
+  return { imported, skipped, duplicates };
 }

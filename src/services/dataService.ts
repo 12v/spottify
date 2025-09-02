@@ -56,4 +56,43 @@ export class DataService {
     const docRef = doc(db, 'measurements', measurementId);
     await deleteDoc(docRef);
   }
+
+  async removeDuplicates(userId: string): Promise<{ removed: number; kept: number }> {
+    const measurements = await this.getMeasurements(userId);
+    
+    const duplicateGroups = new Map<string, Measurement[]>();
+    
+    for (const measurement of measurements) {
+      const key = `${measurement.date}-${measurement.type}`;
+      if (!duplicateGroups.has(key)) {
+        duplicateGroups.set(key, []);
+      }
+      duplicateGroups.get(key)!.push(measurement);
+    }
+    
+    let removed = 0;
+    let kept = 0;
+    
+    for (const group of duplicateGroups.values()) {
+      if (group.length > 1) {
+        const sorted = group.sort((a, b) => {
+          const aTime = (a as any).createdAt?.toMillis?.() || 0;
+          const bTime = (b as any).createdAt?.toMillis?.() || 0;
+          return aTime - bTime;
+        });
+        
+        const toDelete = sorted.slice(1);
+        
+        for (const duplicate of toDelete) {
+          await this.deleteMeasurement(userId, duplicate.id);
+          removed++;
+        }
+        kept++;
+      } else {
+        kept++;
+      }
+    }
+    
+    return { removed, kept };
+  }
 }
