@@ -7,6 +7,7 @@ import { formatLocalDate, formatDisplayDate } from '../utils/dateUtils';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
+import HormoneGraph from './HormoneGraph';
 import type { Measurement, Prediction } from '../types';
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [cleanupRun, setCleanupRun] = useState(false);
+  const [currentCycle, setCurrentCycle] = useState<{ cycleDay: number; cycleLength: number } | null>(null);
   const { error, handleError, clearError, retry } = useErrorHandler();
 
   useEffect(() => {
@@ -35,6 +37,9 @@ export default function Dashboard() {
       setMeasurements(data);
       const pred = CycleService.predictNextCycle(data);
       setPrediction(pred);
+      
+      const cycle = CycleService.getCurrentCycleDay(data);
+      setCurrentCycle(cycle);
       
       if (!cleanupRun) {
         dataService.removeDuplicates(currentUser.uid).then(cleanupResult => {
@@ -107,7 +112,7 @@ export default function Dashboard() {
       return {
         number: days,
         label: type === 'period' 
-          ? (days === 1 ? 'day until period' : 'days until period')
+          ? (days === 1 ? 'day until your period' : 'days until your period')
           : (days === 1 ? 'day until ovulation' : 'days until ovulation')
       };
     }
@@ -143,8 +148,26 @@ export default function Dashboard() {
         />
       )}
 
+      {currentCycle && (
+        <HormoneGraph 
+          currentCycleDay={currentCycle.cycleDay}
+          cycleLength={currentCycle.cycleLength}
+        />
+      )}
+
       {prediction ? (
         <div className="prediction-grid">
+          {currentCycle && (
+            <div className="prediction-card">
+              <div className="countdown">
+                {currentCycle.cycleDay}<sup className="ordinal-suffix">{(() => {
+                  const day = currentCycle.cycleDay;
+                  return day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
+                })()}</sup>
+              </div>
+              <div className="countdown-label">day of your cycle</div>
+            </div>
+          )}
           <div className="prediction-card">
             {(() => {
               const days = getDaysUntil(prediction.nextPeriod);
@@ -182,10 +205,21 @@ export default function Dashboard() {
         <div className="getting-started">
           <h3>Getting Started</h3>
           <p>Record at least 2 complete cycles to see predictions and insights.</p>
+          {currentCycle && (
+            <div className="current-cycle-card">
+              <div className="countdown">
+                {currentCycle.cycleDay}<sup className="ordinal-suffix">{(() => {
+                  const day = currentCycle.cycleDay;
+                  return day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
+                })()}</sup>
+              </div>
+              <div className="countdown-label">day of your cycle</div>
+            </div>
+          )}
         </div>
       )}
 
-      <div className="action-grid">
+      <div className="main-actions">
         <Link 
           to={`/calendar?openModal=true&date=${formatLocalDate(new Date())}`}
           className="main-action"
@@ -198,7 +232,9 @@ export default function Dashboard() {
           <h3>Calendar</h3>
           <p>View monthly cycle data</p>
         </Link>
+      </div>
 
+      <div className="secondary-actions">
         <Link to="/statistics" className="secondary-action">
           Analytics
         </Link>

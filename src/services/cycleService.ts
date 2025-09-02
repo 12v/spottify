@@ -166,6 +166,21 @@ export class CycleService {
     return alerts;
   }
 
+  static getCurrentCycleDay(measurements: Measurement[]): { cycleDay: number; cycleLength: number } | null {
+    const lastPeriodStart = this.getLastPeriodStart(measurements);
+    if (!lastPeriodStart) return null;
+    
+    const today = new Date();
+    const daysSinceLastPeriod = Math.floor((today.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY) + 1;
+    
+    const stats = this.calculateCycleStats(measurements);
+    
+    return {
+      cycleDay: daysSinceLastPeriod,
+      cycleLength: Math.round(stats.averageCycleLength)
+    };
+  }
+
   static getLastPeriodStart(measurements: Measurement[]): Date | null {
     const periodMeasurements = measurements
       .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
