@@ -132,7 +132,7 @@ export default function Statistics() {
 
   const chartOptions = {
     responsive: true,
-    animation: false,
+    animation: false as const,
     plugins: {
       legend: {
         position: 'top' as const,
