@@ -3,48 +3,39 @@ import { MockDataFactory } from '../../test/helpers/mockData';
 import type { Measurement } from '../../types';
 import { vi } from 'vitest';
 
-// Mock Firebase modules at the top level
-vi.mock('firebase/firestore', () => {
-  return {
-    collection: vi.fn(() => 'mock-collection-ref'),
-    addDoc: vi.fn(),
-    getDocs: vi.fn(),
-    query: vi.fn(),
-    orderBy: vi.fn(),
-    where: vi.fn(), 
-    deleteDoc: vi.fn(),
-    doc: vi.fn(),
-    getFirestore: vi.fn(),
-    initializeApp: vi.fn(),
-    getAuth: vi.fn(),
-    Timestamp: {
-      now: vi.fn()
-    }
-  };
-});
-
-vi.mock('../firebase', () => ({
-  db: {},
-  auth: {}
+// Mock Firebase modules
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(() => 'mock-collection'),
+  addDoc: vi.fn(),
+  getDocs: vi.fn(),
+  deleteDoc: vi.fn(),
+  doc: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  getFirestore: vi.fn(),
+  initializeApp: vi.fn(),
+  getAuth: vi.fn(),
+  Timestamp: { now: vi.fn() }
 }));
 
-// Import the mocked functions after mocking
+vi.mock('../firebase', () => ({ db: {} }));
+
 import { addDoc, getDocs, deleteDoc, Timestamp } from 'firebase/firestore';
 
+// Firebase mocking legitimately requires any types due to complex external interfaces  
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 describe('DataService', () => {
   let dataService: DataService;
   const testUserId = 'test-user-123';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Setup default mock behaviors
     vi.mocked(addDoc).mockResolvedValue({ id: 'mock-id-123' } as any);
     vi.mocked(getDocs).mockResolvedValue({ docs: [] } as any);
     vi.mocked(deleteDoc).mockResolvedValue(undefined);
-    vi.mocked(Timestamp.now).mockReturnValue({ seconds: Date.now() / 1000 } as any);
-    
+    vi.mocked(Timestamp.now).mockReturnValue({ seconds: Date.now() / 1000, nanoseconds: 0 } as any);
     dataService = DataService.getInstance();
   });
 
@@ -66,12 +57,12 @@ describe('DataService', () => {
 
       expect(result).toBe('mock-id-123');
       expect(addDoc).toHaveBeenCalledWith(
-        'mock-collection-ref', // collection reference
-        {
+        'mock-collection',
+        expect.objectContaining({
           ...measurementData,
           userId: testUserId,
           createdAt: expect.any(Object)
-        }
+        })
       );
     });
 

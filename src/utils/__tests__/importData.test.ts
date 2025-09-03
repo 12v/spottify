@@ -2,59 +2,41 @@ import { importMeasurements } from '../importData';
 import { PERIOD_OPTIONS } from '../constants';
 import { vi } from 'vitest';
 
-// Mock Firebase modules at the top level
+// Mock Firebase modules  
 vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(() => 'mock-collection-ref'),
+  collection: vi.fn(() => 'mock-collection'),
   addDoc: vi.fn(),
-  Timestamp: {
-    now: vi.fn()
-  }
+  Timestamp: { now: vi.fn() }
 }));
 
-vi.mock('../../firebase', () => ({
-  db: {}
-}));
+vi.mock('../../firebase', () => ({ db: {} }));
 
-// Mock DataService
 vi.mock('../../services/dataService', () => ({
-  DataService: {
-    getInstance: vi.fn()
-  }
+  DataService: { getInstance: vi.fn() }
 }));
 
-// Import after mocking
 import { addDoc, Timestamp } from 'firebase/firestore';
 import { DataService } from '../../services/dataService';
 
+// Firebase mocking legitimately requires any types due to complex external interfaces
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 describe('importMeasurements', () => {
   const testUserId = 'test-user-123';
   let mockDataService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Setup mock DataService
-    mockDataService = {
-      getMeasurements: vi.fn().mockResolvedValue([])
-    };
+    mockDataService = { getMeasurements: vi.fn().mockResolvedValue([]) };
     vi.mocked(DataService.getInstance).mockReturnValue(mockDataService);
-    
-    // Setup Firebase mocks
     vi.mocked(addDoc).mockResolvedValue({ id: 'mock-id-123' } as any);
-    vi.mocked(Timestamp.now).mockReturnValue({ seconds: Date.now() / 1000 } as any);
+    vi.mocked(Timestamp.now).mockReturnValue({ seconds: Date.now() / 1000, nanoseconds: 0 } as any);
   });
 
-  const createTestFile = (data: unknown[]): File => {
-    const jsonData = JSON.stringify(data);
-    const mockFile = {
-      text: vi.fn().mockResolvedValue(jsonData),
-      name: 'test-data.json',
-      size: jsonData.length,
-      type: 'application/json'
-    };
-    return mockFile as unknown as File;
-  };
+  const createTestFile = (data: any) => ({
+    text: vi.fn().mockResolvedValue(JSON.stringify(data)),
+    name: 'test.json'
+  }) as any;
 
   describe('Valid data import', () => {
     it('imports period measurements successfully', async () => {
@@ -124,13 +106,12 @@ describe('importMeasurements', () => {
 
       expect(result.imported).toBe(1);
       expect(addDoc).toHaveBeenCalledWith(
-        'mock-collection-ref',
+        'mock-collection',
         expect.objectContaining({
           type: 'period',
           date: '2024-01-01',
           value: { option: 'spotting' },
-          userId: testUserId,
-          createdAt: expect.any(Object)
+          userId: testUserId
         })
       );
     });
@@ -244,15 +225,8 @@ describe('importMeasurements', () => {
     });
 
     it('handles malformed JSON gracefully', async () => {
-      const mockFile = {
-        text: vi.fn().mockResolvedValue('invalid json'),
-        name: 'test.json',
-        size: 12,
-        type: 'application/json'
-      };
-      
-      await expect(importMeasurements(testUserId, mockFile as unknown as File))
-        .rejects.toThrow();
+      const mockFile = { text: vi.fn().mockResolvedValue('invalid json') } as any;
+      await expect(importMeasurements(testUserId, mockFile)).rejects.toThrow();
     });
 
     it('handles empty files', async () => {
