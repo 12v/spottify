@@ -460,6 +460,27 @@ body {
   margin-bottom: 1rem;
 }
 
+.chart canvas {
+  height: 300px !important;
+}
+
+@media (max-width: 768px) {
+  .chart {
+    padding: 0.75rem;
+  }
+  
+  .chart canvas {
+    height: 250px !important;
+  }
+}
+
+.chart-disclaimer {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+}
+
 /* Current cycle card */
 .current-cycle-card {
   padding: 1rem;

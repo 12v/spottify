@@ -229,15 +229,8 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
   return (
     <div className="chart">
       <Line data={chartData} options={options} />
-      <div style={{ 
-        marginTop: '1rem', 
-        fontSize: '0.85rem', 
-        color: '#666',
-        textAlign: 'center'
-      }}>
-        <p>
-          This shows typical hormone patterns during a menstrual cycle. Individual cycles may vary.
-        </p>
+      <div className="chart-disclaimer">
+        This shows typical hormone patterns during a menstrual cycle. Individual cycles may vary.
       </div>
     </div>
   );
