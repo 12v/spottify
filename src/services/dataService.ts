@@ -76,8 +76,8 @@ export class DataService {
     for (const group of duplicateGroups.values()) {
       if (group.length > 1) {
         const sorted = group.sort((a, b) => {
-          const aTime = (a as any).createdAt?.toMillis?.() || 0;
-          const bTime = (b as any).createdAt?.toMillis?.() || 0;
+          const aTime = (a as { createdAt?: { toMillis?: () => number } }).createdAt?.toMillis?.() || 0;
+          const bTime = (b as { createdAt?: { toMillis?: () => number } }).createdAt?.toMillis?.() || 0;
           return aTime - bTime;
         });
         

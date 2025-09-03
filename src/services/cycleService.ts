@@ -5,7 +5,7 @@ import { CYCLE_CONSTANTS, TIME_CONSTANTS, PERIOD_OPTIONS } from '../utils/consta
 export class CycleService {
   static calculateCycleStats(measurements: Measurement[]): CycleStats {
     const periodMeasurements = measurements
-      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
+      .filter(m => m.type === 'period' && (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE && (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     if (periodMeasurements.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
@@ -117,7 +117,7 @@ export class CycleService {
 
   static getCycleData(measurements: Measurement[]) {
     const periodMeasurements = measurements
-      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
+      .filter(m => m.type === 'period' && (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE && (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     if (periodMeasurements.length < 2) return [];
@@ -183,7 +183,7 @@ export class CycleService {
 
   static getLastPeriodStart(measurements: Measurement[]): Date | null {
     const periodMeasurements = measurements
-      .filter(m => m.type === 'period' && (m.value as any).option !== PERIOD_OPTIONS.NONE && (m.value as any).option !== PERIOD_OPTIONS.SPOTTING)
+      .filter(m => m.type === 'period' && (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE && (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     if (periodMeasurements.length === 0) return null;

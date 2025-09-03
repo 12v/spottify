@@ -26,7 +26,7 @@ function CalendarDay({
     const periodMeasurement = measurements.find(m => m.type === 'period');
 
     if (periodMeasurement) {
-      const flow = (periodMeasurement.value as any).option;
+      const flow = (periodMeasurement.value as { option: string }).option;
       switch (flow) {
         case PERIOD_OPTIONS.HEAVY: return '#d32f2f';
         case PERIOD_OPTIONS.MEDIUM: return '#f57c00';
@@ -51,8 +51,8 @@ function CalendarDay({
     const symptoms = measurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
 
     return {
-      period: period ? (period.value as any).option : null,
-      bbt: bbt ? (bbt.value as any).celsius : null,
+      period: period ? (period.value as { option: string }).option : null,
+      bbt: bbt ? (bbt.value as { temperature: number }).temperature : null,
       symptoms: symptoms.length
     };
   }

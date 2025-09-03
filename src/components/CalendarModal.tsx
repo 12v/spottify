@@ -31,10 +31,10 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
 
       setMeasurements({
-        period: periodData ? (periodData.value as any).option : PERIOD_OPTIONS.NONE,
-        bbt: bbtData ? String((bbtData.value as any).celsius) : '',
-        cramps: crampsData ? (crampsData.value as any).severity : SYMPTOM_SEVERITY.NONE,
-        soreBreasts: soreBreastsData ? (soreBreastsData.value as any).severity : SYMPTOM_SEVERITY.NONE
+        period: periodData ? (periodData.value as { option: string }).option : PERIOD_OPTIONS.NONE,
+        bbt: bbtData ? String((bbtData.value as { temperature: number }).temperature) : '',
+        cramps: crampsData ? (crampsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE,
+        soreBreasts: soreBreastsData ? (soreBreastsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE
       });
     }
   }, [show, existingData]);

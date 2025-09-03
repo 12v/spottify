@@ -203,7 +203,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
             }
           }
         }
-      } as any
+      }
     },
     scales: {
       x: {

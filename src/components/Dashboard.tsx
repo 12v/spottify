@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import { formatLocalDate, formatDisplayDate } from '../utils/dateUtils';

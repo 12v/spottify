@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from './useAuth';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
@@ -40,7 +40,7 @@ export function useCycleData() {
     }
   }
 
-  async function saveMeasurement(date: string, type: string, value: any) {
+  async function saveMeasurement(date: string, type: string, value: string | number) {
     if (!currentUser) return;
 
     try {
@@ -57,14 +57,14 @@ export function useCycleData() {
           promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
             type,
             date,
-            value: type === 'period' ? { option: value } : { severity: value }
+            value: type === 'period' ? { option: value as string } : { severity: value as string }
           }));
         }
       } else if (type === 'bbt' && value) {
         promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
           type,
           date,
-          value: { celsius: parseFloat(value) }
+          value: { temperature: parseFloat(value as string) }
         }));
       }
 

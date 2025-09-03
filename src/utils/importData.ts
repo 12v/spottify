@@ -8,7 +8,7 @@ interface RawMeasurement {
   type: string;
   id: string;
   date: string;
-  value: any;
+  value: { option?: string; temperature?: number; severity?: string };
 }
 
 export async function importMeasurements(userId: string, file: File) {
@@ -35,7 +35,7 @@ export async function importMeasurements(userId: string, file: File) {
       switch (measurement.type) {
         case 'period': {
           const validOptions = Object.values(PERIOD_OPTIONS);
-          if (!validOptions.includes(measurement.value.option)) {
+          if (!validOptions.includes((measurement.value.option || '') as typeof PERIOD_OPTIONS[keyof typeof PERIOD_OPTIONS])) {
             console.error(`Invalid period option: ${measurement.value.option} for measurement ${measurement.id}`);
             skipped++;
             continue;
@@ -43,17 +43,17 @@ export async function importMeasurements(userId: string, file: File) {
           convertedMeasurement = {
             type: 'period',
             date: measurement.date,
-            value: { option: measurement.value.option }
+            value: { option: measurement.value.option || '' }
           };
           break;
         }
           
         case 'bbt':
-          if (measurement.value.celsius) {
+          if (measurement.value.temperature) {
             convertedMeasurement = {
               type: 'bbt',
               date: measurement.date,
-              value: { celsius: measurement.value.celsius }
+              value: { temperature: measurement.value.temperature }
             };
           } else {
             skipped++;

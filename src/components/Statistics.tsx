@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import LoadingSpinner from './LoadingSpinner';
