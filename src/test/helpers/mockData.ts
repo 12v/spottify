@@ -156,6 +156,34 @@ export class MockDataFactory {
   }
 
   /**
+   * Create measurements for a specific day
+   */
+  static createDayMeasurements(
+    date: string | Date,
+    count: number = 4
+  ): Measurement[] {
+    const measurements: Measurement[] = [];
+    
+    if (count >= 1) {
+      measurements.push(this.createPeriodMeasurement(date, PERIOD_OPTIONS.MEDIUM));
+    }
+    
+    if (count >= 2) {
+      measurements.push(this.createBBTMeasurement(date, 36.5));
+    }
+    
+    if (count >= 3) {
+      measurements.push(this.createSymptomMeasurement(date, 'cramps', SYMPTOM_SEVERITY.MILD));
+    }
+    
+    if (count >= 4) {
+      measurements.push(this.createSymptomMeasurement(date, 'sore_breasts', SYMPTOM_SEVERITY.NONE));
+    }
+    
+    return measurements;
+  }
+
+  /**
    * Create test user with realistic data
    */
   static createMockUser(
