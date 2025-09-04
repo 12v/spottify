@@ -166,6 +166,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
 
   const options: ChartOptions<'line'> = {
     responsive: true,
+    maintainAspectRatio: false,
     animation: false,
     interaction: {
       intersect: false,
