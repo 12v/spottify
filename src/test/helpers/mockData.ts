@@ -201,6 +201,181 @@ export class MockDataFactory {
   }
 
   /**
+   * Create multi-cycle data for integration testing
+   */
+  static createMultiCycleData(
+    userId: string,
+    cycleCount: number,
+    startDate: Date
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements = this.createMultipleCycles(startDate, cycleCount);
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create consistent cycles for prediction testing
+   */
+  static createConsistentCycles(
+    userId: string,
+    cycleCount: number,
+    startDate: Date
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements = this.createMultipleCycles(
+      startDate, 
+      cycleCount, 
+      { avgCycleLength: 28, avgPeriodLength: 5, variation: 0 }
+    );
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create large dataset for performance testing
+   */
+  static createLargeDataset(
+    userId: string,
+    measurementCount: number,
+    startDate: Date,
+    endDate: Date
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements: Measurement[] = [];
+    const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const measurementsPerDay = Math.ceil(measurementCount / daysDiff);
+    
+    for (let day = 0; day < daysDiff && measurements.length < measurementCount; day++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + day);
+      
+      // Add random measurements for this day
+      for (let i = 0; i < measurementsPerDay && measurements.length < measurementCount; i++) {
+        const rand = Math.random();
+        if (rand < 0.3) {
+          measurements.push(this.createPeriodMeasurement(currentDate, PERIOD_OPTIONS.MEDIUM));
+        } else if (rand < 0.6) {
+          measurements.push(this.createBBTMeasurement(currentDate, 36.5 + Math.random() * 0.8));
+        } else {
+          measurements.push(this.createSymptomMeasurement(currentDate, 'cramps', SYMPTOM_SEVERITY.MILD));
+        }
+      }
+    }
+    
+    return {
+      measurements: measurements.slice(0, measurementCount).map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create multi-year data for calendar performance testing
+   */
+  static createMultiYearData(
+    userId: string,
+    years: number,
+    startDate: Date
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements: Measurement[] = [];
+    const cyclesPerYear = Math.floor(365 / 28);
+    
+    for (let year = 0; year < years; year++) {
+      const yearStart = new Date(startDate);
+      yearStart.setFullYear(startDate.getFullYear() + year);
+      
+      const yearMeasurements = this.createMultipleCycles(yearStart, cyclesPerYear);
+      measurements.push(...yearMeasurements);
+    }
+    
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create dense dataset with multiple measurements per day
+   */
+  static createDenseDataset(
+    userId: string,
+    days: number,
+    avgMeasurementsPerDay: number
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements: Measurement[] = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    for (let day = 0; day < days; day++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + day);
+      
+      const measurementsToday = Math.floor(avgMeasurementsPerDay + (Math.random() - 0.5) * 4);
+      
+      for (let i = 0; i < measurementsToday; i++) {
+        const measurementType = Math.random();
+        if (measurementType < 0.4) {
+          measurements.push(this.createPeriodMeasurement(currentDate, PERIOD_OPTIONS.MEDIUM));
+        } else if (measurementType < 0.7) {
+          measurements.push(this.createBBTMeasurement(currentDate, 36.0 + Math.random() * 1.5));
+        } else {
+          const symptom = Math.random() > 0.5 ? 'cramps' : 'sore_breasts';
+          measurements.push(this.createSymptomMeasurement(currentDate, symptom, SYMPTOM_SEVERITY.MILD));
+        }
+      }
+    }
+    
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create statistical dataset for analysis testing
+   */
+  static createStatisticalDataset(
+    userId: string,
+    cycleCount: number,
+    startDate: Date
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements = this.createMultipleCycles(
+      startDate, 
+      cycleCount,
+      { avgCycleLength: 28, avgPeriodLength: 5, variation: 4 }
+    );
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
+   * Create massive dataset for memory testing
+   */
+  static createMassiveDataset(
+    userId: string,
+    measurementCount: number
+  ): { measurements: (Measurement & { userId: string })[] } {
+    const measurements: Measurement[] = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - measurementCount);
+    
+    for (let i = 0; i < measurementCount; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      
+      const measurementType = i % 3;
+      if (measurementType === 0) {
+        measurements.push(this.createPeriodMeasurement(currentDate, PERIOD_OPTIONS.MEDIUM));
+      } else if (measurementType === 1) {
+        measurements.push(this.createBBTMeasurement(currentDate, 36.0 + Math.random() * 1.0));
+      } else {
+        measurements.push(this.createSymptomMeasurement(currentDate, 'cramps', SYMPTOM_SEVERITY.MILD));
+      }
+    }
+    
+    return {
+      measurements: measurements.map(m => ({ ...m, userId }))
+    };
+  }
+
+  /**
    * Create edge case scenarios
    */
   static createEdgeCaseScenarios() {
