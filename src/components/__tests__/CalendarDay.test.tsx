@@ -233,7 +233,7 @@ describe('CalendarDay', () => {
       const measurements = [
         MockDataFactory.createPeriodMeasurement('2024-03-15', PERIOD_OPTIONS.MEDIUM),
         MockDataFactory.createBBTMeasurement('2024-03-15', 36.8),
-        MockDataFactory.createSymptomMeasurement('2024-03-15', 'cramps', SYMPTOM_SEVERITY.SEVERE)
+        MockDataFactory.createSymptomMeasurement('2024-03-15', 'sore_breasts', SYMPTOM_SEVERITY.SEVERE)
       ];
       
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
