@@ -207,7 +207,8 @@ describe('CalendarDay', () => {
       
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
       
-      const symptomElement = screen.getByText('2⚠');
+      // Only sore_breasts should be counted now (cramps are hidden from calendar)
+      const symptomElement = screen.getByText('1⚠');
       expect(symptomElement).toBeInTheDocument();
       expect(symptomElement).toHaveStyle({
         backgroundColor: 'rgb(255, 152, 0)',
@@ -232,7 +233,7 @@ describe('CalendarDay', () => {
       const measurements = [
         MockDataFactory.createPeriodMeasurement('2024-03-15', PERIOD_OPTIONS.MEDIUM),
         MockDataFactory.createBBTMeasurement('2024-03-15', 36.8),
-        MockDataFactory.createSymptomMeasurement('2024-03-15', 'cramps', SYMPTOM_SEVERITY.SEVERE)
+        MockDataFactory.createSymptomMeasurement('2024-03-15', 'sore_breasts', SYMPTOM_SEVERITY.SEVERE)
       ];
       
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
@@ -259,7 +260,8 @@ describe('CalendarDay', () => {
       
       expect(screen.queryByText('🩸')).not.toBeInTheDocument();
       expect(screen.getByText('36.4°')).toBeInTheDocument();
-      expect(screen.getByText('1⚠')).toBeInTheDocument();
+      // Cramps are now hidden from calendar, so no symptom badge should appear
+      expect(screen.queryByText('1⚠')).not.toBeInTheDocument();
       
       // Should have border for non-period data
       const dayElement = screen.getByText('15').parentElement;
