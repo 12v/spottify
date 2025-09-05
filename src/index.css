@@ -461,7 +461,7 @@ body {
 }
 
 .chart canvas {
-  height: 300px !important;
+  height: 300px;
 }
 
 @media (max-width: 768px) {
@@ -470,15 +470,15 @@ body {
   }
   
   .chart canvas {
-    height: 320px !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    height: 320px;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 480px) {
   .chart canvas {
-    height: 280px !important;
+    height: 280px;
   }
 }
 
