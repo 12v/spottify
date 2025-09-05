@@ -7,7 +7,6 @@ import { MockDataFactory } from '../../test/helpers/mockData';
 import { DataService } from '../../services/dataService';
 import CalendarModal from '../../components/CalendarModal';
 import Calendar from '../../components/Calendar';
-import Statistics from '../../components/Statistics';
 import Dashboard from '../../components/Dashboard';
 
 // Mock Firebase modules
@@ -29,7 +28,6 @@ vi.mock('../../firebase', () => ({ db: {} }));
 import { addDoc, getDocs, deleteDoc, Timestamp } from 'firebase/firestore';
 
 describe('Integration: Data Persistence', () => {
-  let dataService: DataService;
   const mockUser = {
     uid: 'persistence-test-user',
     email: 'persistence@example.com'
@@ -44,16 +42,15 @@ describe('Integration: Data Persistence', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    dataService = DataService.getInstance();
     
     // Mock Timestamp
     vi.mocked(Timestamp.now).mockReturnValue({
       seconds: Date.now() / 1000,
       nanoseconds: 0
-    } as any);
+    });
     
     // Mock successful operations
-    vi.mocked(addDoc).mockResolvedValue({ id: 'new-measurement-id' } as any);
+    vi.mocked(addDoc).mockResolvedValue({ id: 'new-measurement-id' });
     vi.mocked(deleteDoc).mockResolvedValue(undefined);
   });
 
@@ -70,12 +67,10 @@ describe('Integration: Data Persistence', () => {
   describe('Data Flow: Save → Display → Update', () => {
     it('should persist measurement and reflect in calendar display', async () => {
       const user = userEvent.setup();
-      let savedMeasurement: any = null;
 
       // Mock addDoc to capture saved data
-      vi.mocked(addDoc).mockImplementation(async (collection, data) => {
-        savedMeasurement = data;
-        return { id: 'test-measurement-123' } as any;
+      vi.mocked(addDoc).mockImplementation(async () => {
+        return { id: 'test-measurement-123' });
       });
 
       // Step 1: Save a measurement via CalendarModal
@@ -123,7 +118,7 @@ describe('Integration: Data Persistence', () => {
             userId: mockUser.uid
           })
         }]
-      } as any);
+      });
 
       // Step 4: Render Calendar and verify measurement displays
       renderWithAuth(<Calendar />);
@@ -134,7 +129,6 @@ describe('Integration: Data Persistence', () => {
     });
 
     it('should handle measurement updates and deletions', async () => {
-      const user = userEvent.setup();
       const measurementId = 'update-test-123';
       const testDate = '2024-01-20';
 
@@ -150,7 +144,7 @@ describe('Integration: Data Persistence', () => {
           id: measurementId,
           data: () => ({ ...existingMeasurement, userId: mockUser.uid })
         }]
-      } as any);
+      });
 
       // Step 2: Render Calendar with existing data
       renderWithAuth(<Calendar />);
@@ -166,7 +160,7 @@ describe('Integration: Data Persistence', () => {
       expect(vi.mocked(deleteDoc)).toHaveBeenCalled();
 
       // Step 5: Mock empty results after deletion
-      vi.mocked(getDocs).mockResolvedValue({ docs: [] } as any);
+      vi.mocked(getDocs).mockResolvedValue({ docs: [] });
 
       // Re-render and verify measurement is gone
       renderWithAuth(<Calendar />);
@@ -207,7 +201,7 @@ describe('Integration: Data Persistence', () => {
           id: `measurement-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Step 4: Render Dashboard for user 1
       render(
@@ -256,7 +250,7 @@ describe('Integration: Data Persistence', () => {
         loading: false
       };
 
-      vi.mocked(getDocs).mockResolvedValue({ docs: [] } as any);
+      vi.mocked(getDocs).mockResolvedValue({ docs: [] });
 
       rerender(
         <BrowserRouter>
@@ -309,7 +303,7 @@ describe('Integration: Data Persistence', () => {
       const testDate = '2024-01-30';
 
       // Step 1: Mock successful save operation
-      vi.mocked(addDoc).mockResolvedValue({ id: measurementId } as any);
+      vi.mocked(addDoc).mockResolvedValue({ id: measurementId });
 
       // Step 2: Add measurement
       await dataService.addMeasurement({
@@ -330,7 +324,7 @@ describe('Integration: Data Persistence', () => {
             userId: mockUser.uid
           })
         }]
-      } as any);
+      });
 
       // Step 4: Verify consistency
       const measurements = await dataService.getMeasurements(mockUser.uid);
@@ -348,7 +342,7 @@ describe('Integration: Data Persistence', () => {
         if (failureCount <= maxFailures) {
           return Promise.reject(new Error('Temporary failure'));
         }
-        return Promise.resolve({ docs: [] } as any);
+        return Promise.resolve({ docs: [] });
       });
 
       // Step 2: Render Dashboard (should retry on failure)

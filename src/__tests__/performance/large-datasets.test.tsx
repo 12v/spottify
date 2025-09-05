@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { MockDataFactory } from '../../test/helpers/mockData';
-import { DataService } from '../../services/dataService';
 import Calendar from '../../components/Calendar';
 import Statistics from '../../components/Statistics';
 import Dashboard from '../../components/Dashboard';
@@ -28,7 +27,6 @@ vi.mock('../../firebase', () => ({ db: {} }));
 import { getDocs, Timestamp } from 'firebase/firestore';
 
 describe('Performance: Large Datasets', () => {
-  let dataService: DataService;
   const mockUser = {
     uid: 'performance-test-user',
     email: 'perf@example.com'
@@ -43,13 +41,12 @@ describe('Performance: Large Datasets', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    dataService = DataService.getInstance();
     
     // Mock Timestamp
     vi.mocked(Timestamp.now).mockReturnValue({
       seconds: Date.now() / 1000,
       nanoseconds: 0
-    } as any);
+    });
   });
 
   const renderWithAuth = (component: React.ReactElement) => {
@@ -79,7 +76,7 @@ describe('Performance: Large Datasets', () => {
           id: `large-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Render HormoneGraph with large dataset
       renderWithAuth(<HormoneGraph />);
@@ -109,7 +106,7 @@ describe('Performance: Large Datasets', () => {
           id: `update-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       const { rerender } = renderWithAuth(<HormoneGraph />);
 
@@ -161,7 +158,7 @@ describe('Performance: Large Datasets', () => {
           id: `multiyear-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       renderWithAuth(<Calendar />);
 
@@ -212,7 +209,7 @@ describe('Performance: Large Datasets', () => {
           id: `dense-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       const interactionStart = Date.now();
       
@@ -260,7 +257,7 @@ describe('Performance: Large Datasets', () => {
           id: `stat-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       renderWithAuth(<Statistics />);
 
@@ -296,7 +293,7 @@ describe('Performance: Large Datasets', () => {
             id: `incremental-${currentDataSize}-${i}`,
             data: () => m
           }))
-        } as any);
+        });
 
         const { rerender } = renderWithAuth(<Statistics />);
         
@@ -347,7 +344,7 @@ describe('Performance: Large Datasets', () => {
           id: `massive-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Render multiple components with the large dataset
       const { unmount: unmountDashboard } = renderWithAuth(<Dashboard />);
@@ -393,7 +390,7 @@ describe('Performance: Large Datasets', () => {
           id: `cleanup-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Mount and unmount multiple times
       for (let i = 0; i < 10; i++) {
@@ -436,7 +433,7 @@ describe('Performance: Large Datasets', () => {
                 id: `concurrent-${requestCount}-${i}`,
                 data: () => m
               }))
-            } as any);
+            });
           }, 50);
         });
       });

@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { MockDataFactory } from '../../test/helpers/mockData';
-import { DataService } from '../../services/dataService';
 import Dashboard from '../../components/Dashboard';
 import Calendar from '../../components/Calendar';
 import Statistics from '../../components/Statistics';
@@ -28,7 +27,6 @@ vi.mock('../../firebase', () => ({ db: {} }));
 import { addDoc, getDocs, Timestamp } from 'firebase/firestore';
 
 describe('Integration: Complete Cycle Tracking', () => {
-  let dataService: DataService;
   const mockUser = {
     uid: 'integration-test-user',
     email: 'test@example.com'
@@ -43,19 +41,18 @@ describe('Integration: Complete Cycle Tracking', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    dataService = DataService.getInstance();
     
     // Mock Timestamp
     vi.mocked(Timestamp.now).mockReturnValue({
       seconds: Date.now() / 1000,
       nanoseconds: 0
-    } as any);
+    });
     
     // Mock successful data operations
-    vi.mocked(addDoc).mockResolvedValue({ id: 'mock-measurement-id' } as any);
+    vi.mocked(addDoc).mockResolvedValue({ id: 'mock-measurement-id' });
     vi.mocked(getDocs).mockResolvedValue({ 
       docs: [] 
-    } as any);
+    });
   });
 
   const renderWithAuth = (component: React.ReactElement) => {
@@ -70,7 +67,6 @@ describe('Integration: Complete Cycle Tracking', () => {
 
   describe('Complete Cycle: Add Measurements → View Predictions → Track Completion', () => {
     it('should support full cycle tracking workflow', async () => {
-      const user = userEvent.setup();
       
       // Step 1: Add multiple measurements for a cycle
       const cycleStart = new Date('2024-01-01');
@@ -89,7 +85,7 @@ describe('Integration: Complete Cycle Tracking', () => {
           id: `doc-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Step 2: Render Dashboard and verify it shows current cycle data
       renderWithAuth(<Dashboard />);
@@ -131,7 +127,7 @@ describe('Integration: Complete Cycle Tracking', () => {
           id: `irregular-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       renderWithAuth(<Dashboard />);
 
@@ -150,7 +146,6 @@ describe('Integration: Complete Cycle Tracking', () => {
 
   describe('Data Workflow: Import → Validate → Export', () => {
     it('should support complete data management workflow', async () => {
-      const user = userEvent.setup();
       
       // Step 1: Simulate import of historical data
       const historicalData = MockDataFactory.createMultiCycleData(
@@ -164,7 +159,7 @@ describe('Integration: Complete Cycle Tracking', () => {
           id: `historical-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Step 2: Render Dashboard with historical data
       renderWithAuth(<Dashboard />);
@@ -199,7 +194,7 @@ describe('Integration: Complete Cycle Tracking', () => {
           id: `multi-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       // Render Statistics component
       renderWithAuth(<Statistics />);
@@ -224,7 +219,7 @@ describe('Integration: Complete Cycle Tracking', () => {
           id: `consistent-${i}`,
           data: () => m
         }))
-      } as any);
+      });
 
       renderWithAuth(<Dashboard />);
 
