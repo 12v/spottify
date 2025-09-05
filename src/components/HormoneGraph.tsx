@@ -28,6 +28,10 @@ interface HormoneGraphProps {
   cycleLength: number;
 }
 
+// Chart configuration constants
+const CHART_HEIGHT = '300px';
+const Y_AXIS_PADDING_MULTIPLIER = 1.1;
+
 export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGraphProps) {
   // Generate hormone level data for a typical cycle
   const generateHormoneData = (days: number) => {
@@ -231,14 +235,14 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
         beginAtZero: true,
         max: Math.max(
           ...hormoneData.map(d => Math.max(d.oestrogen, d.progesterone, d.fsh, d.lh))
-        ) * 1.1
+        ) * Y_AXIS_PADDING_MULTIPLIER
       }
     }
   };
 
   return (
     <div className="chart">
-      <div style={{ height: '300px', position: 'relative' }}>
+      <div className="hormone-chart-container">
         <Line data={chartData} options={options} />
       </div>
       <div className="chart-disclaimer">
