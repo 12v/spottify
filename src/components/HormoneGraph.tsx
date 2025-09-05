@@ -29,17 +29,16 @@ interface HormoneGraphProps {
 }
 
 // Chart configuration constants
-const CHART_HEIGHT = '300px';
 const Y_AXIS_PADDING_MULTIPLIER = 1.1;
 
 export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGraphProps) {
   // Generate hormone level data for a typical cycle
   const generateHormoneData = (days: number) => {
     const data = [];
-    
+
     for (let day = 1; day <= days; day++) {
       const ovulationDay = Math.round(days / 2);
-      
+
       // Oestrogen levels - rises before ovulation, drops after
       let oestrogen;
       if (day <= 5) {
@@ -55,7 +54,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
         const daysLeft = days - day + 1;
         oestrogen = 30 - (3 - daysLeft) * 2;
       }
-      
+
       // Progesterone levels - low until ovulation, then rises
       let progesterone;
       const basalProgesterone = 2;
@@ -74,7 +73,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
           progesterone = basalProgesterone + (daysLeft - 1) * 1;
         }
       }
-      
+
       // FSH (Follicle Stimulating Hormone) - peaks before ovulation
       let fsh;
       const basalFsh = 6;
@@ -91,7 +90,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
         const daysLeft = days - day + 1;
         fsh = basalFsh - (2 - daysLeft) * 1;
       }
-      
+
       // LH (Luteinizing Hormone) - sharp peak at ovulation
       let lh;
       const basalLh = 3;
@@ -106,7 +105,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
         const daysLeft = days - day + 1;
         lh = basalLh + (daysLeft - 1) * 0.5;
       }
-      
+
       data.push({
         day,
         oestrogen: Math.max(0, oestrogen),
@@ -115,13 +114,13 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
         lh: Math.max(0, lh)
       });
     }
-    
+
     return data;
   };
 
   const hormoneData = generateHormoneData(cycleLength);
   const days = hormoneData.map(d => d.day);
-  
+
   const chartData = {
     labels: days,
     datasets: [
