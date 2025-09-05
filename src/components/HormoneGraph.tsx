@@ -171,6 +171,12 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
     interaction: {
       intersect: false,
     },
+    layout: {
+      padding: {
+        top: 10,
+        bottom: 10
+      }
+    },
     plugins: {
       legend: {
         position: 'top' as const,
@@ -222,14 +228,19 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
       },
       y: {
         display: false,
-        beginAtZero: true
+        beginAtZero: true,
+        max: Math.max(
+          ...hormoneData.map(d => Math.max(d.oestrogen, d.progesterone, d.fsh, d.lh))
+        ) * 1.1
       }
     }
   };
 
   return (
     <div className="chart">
-      <Line data={chartData} options={options} />
+      <div style={{ height: '300px', position: 'relative' }}>
+        <Line data={chartData} options={options} />
+      </div>
       <div className="chart-disclaimer">
         This shows typical hormone patterns during a menstrual cycle. Individual cycles may vary.
       </div>
