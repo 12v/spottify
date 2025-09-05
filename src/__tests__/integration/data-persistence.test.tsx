@@ -70,7 +70,7 @@ describe('Integration: Data Persistence', () => {
 
       // Mock addDoc to capture saved data
       vi.mocked(addDoc).mockImplementation(async () => {
-        return { id: 'test-measurement-123' });
+        return { id: 'test-measurement-123' } as any;
       });
 
       // Step 1: Save a measurement via CalendarModal
