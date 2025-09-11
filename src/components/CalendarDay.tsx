@@ -48,7 +48,7 @@ function CalendarDay({
   function getDayData() {
     const period = measurements.find(m => m.type === 'period');
     const bbt = measurements.find(m => m.type === 'bbt');
-    const symptoms = measurements.filter(m => m.type === 'sore_breasts'); // Exclude cramps from calendar display
+    const symptoms = measurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
 
     return {
       period: period ? (period.value as { option: string }).option : null,
