@@ -2,9 +2,7 @@ import { CYCLE_CONSTANTS, TIME_CONSTANTS, PERIOD_OPTIONS, SYMPTOM_SEVERITY } fro
 
 describe('constants', () => {
   describe('CYCLE_CONSTANTS', () => {
-    it('has expected cycle defaults', () => {
-      expect(CYCLE_CONSTANTS.DEFAULT_CYCLE_LENGTH).toBe(28);
-      expect(CYCLE_CONSTANTS.DEFAULT_PERIOD_LENGTH).toBe(5);
+    it('has minimum cycles requirement for predictions', () => {
       expect(CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS).toBe(2);
     });
 
@@ -12,6 +10,10 @@ describe('constants', () => {
       expect(CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION).toBe(14);
       expect(CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION).toBe(5);
       expect(CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION).toBe(1);
+    });
+
+    it('has cycle validation constants', () => {
+      expect(CYCLE_CONSTANTS.MINIMUM_GAP_BETWEEN_PERIODS_DAYS).toBe(7);
     });
   });
 

@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
+import { CYCLE_CONSTANTS } from '../utils/constants';
 import LoadingSpinner from './LoadingSpinner';
 import type { Measurement, CycleStats } from '../types';
 
@@ -186,7 +187,7 @@ export default function Statistics() {
         </div>
       ) : (
         <div>
-          {stats && (
+          {stats && cycleData.length >= CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS && (
             <div className="content-box">
               <h3>Summary Statistics</h3>
               <div style={{ display: 'grid', gap: '0.5rem' }}>

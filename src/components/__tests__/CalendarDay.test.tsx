@@ -270,13 +270,13 @@ describe('CalendarDay', () => {
   });
 
   describe('Prediction Indicators', () => {
-    it('displays ovulation prediction emoji', () => {
+    it('displays ovulation prediction emoji when predicted', () => {
       render(<CalendarDay {...defaultProps} isPredOvulation={true} />);
       
       expect(screen.getByText('🥚')).toBeInTheDocument();
     });
 
-    it('displays predicted period background', () => {
+    it('displays predicted period background when predicted', () => {
       render(<CalendarDay {...defaultProps} isPredPeriod={true} />);
       
       const dayElement = screen.getByText('15').parentElement;

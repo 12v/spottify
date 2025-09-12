@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [cleanupRun, setCleanupRun] = useState(false);
-  const [currentCycle, setCurrentCycle] = useState<{ cycleDay: number; cycleLength: number } | null>(null);
+  const [currentCycle, setCurrentCycle] = useState<{ cycleDay: number; cycleLength: number | null } | null>(null);
   const { error, handleError, clearError, retry } = useErrorHandler();
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function Dashboard() {
         />
       )}
 
-      {currentCycle && (
+      {currentCycle && currentCycle.cycleLength && (
         <HormoneGraph 
           currentCycleDay={currentCycle.cycleDay}
           cycleLength={currentCycle.cycleLength}

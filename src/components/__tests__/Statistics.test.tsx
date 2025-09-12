@@ -457,14 +457,15 @@ describe('Statistics', () => {
   });
 
   describe('Statistical Accuracy', () => {
-    it('correctly rounds statistical values for display', async () => {
+    it('correctly rounds statistical values for display with sufficient data', async () => {
       const mockStats = {
         averageCycleLength: 28.7,
         cycleVariation: 2.4,
         averagePeriodLength: 5.3
       };
       const mockCycleData = [
-        { cycleNumber: 1, cycleLength: 28, periodLength: 5, startDate: '2024-01-01' }
+        { cycleNumber: 1, cycleLength: 28, periodLength: 5, startDate: '2024-01-01' },
+        { cycleNumber: 2, cycleLength: 29, periodLength: 6, startDate: '2024-01-29' }
       ];
 
       mockCycleService.calculateCycleStats.mockReturnValue(mockStats);
@@ -505,7 +506,7 @@ describe('Statistics', () => {
   });
 
   describe('Edge Cases', () => {
-    it('handles single cycle data', async () => {
+    it('does not show summary stats for single cycle data', async () => {
       const mockStats = {
         averageCycleLength: 28,
         cycleVariation: 0,
@@ -521,10 +522,11 @@ describe('Statistics', () => {
       renderWithRouter(<Statistics />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Total Cycles Analysed:/)).toBeInTheDocument();
-        expect(screen.getByText('1')).toBeInTheDocument();
-        expect(screen.getByText(/Cycle Variation:/)).toBeInTheDocument();
-        expect(screen.getByText(/±0 days/)).toBeInTheDocument();
+        // Summary statistics should NOT be shown with only 1 cycle
+        expect(screen.queryByText(/Total Cycles Analysed:/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Cycle Variation:/)).not.toBeInTheDocument();
+        // But charts should still be visible
+        expect(screen.getByText('Cycle Length Over Time')).toBeInTheDocument();
       });
     });
 

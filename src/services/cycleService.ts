@@ -3,20 +3,17 @@ import { formatLocalDate } from '../utils/dateUtils';
 import { CYCLE_CONSTANTS, TIME_CONSTANTS, PERIOD_OPTIONS } from '../utils/constants';
 
 export class CycleService {
-  static calculateCycleStats(measurements: Measurement[]): CycleStats {
+  static calculateCycleStats(measurements: Measurement[]): CycleStats | null {
     const periodMeasurements = measurements
       .filter(m => m.type === 'period' && (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE && (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    if (periodMeasurements.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
-      return {
-        averageCycleLength: CYCLE_CONSTANTS.DEFAULT_CYCLE_LENGTH,
-        cycleVariation: 0,
-        averagePeriodLength: CYCLE_CONSTANTS.DEFAULT_PERIOD_LENGTH
-      };
+    const cycles = this.extractCycles(periodMeasurements);
+    
+    if (cycles.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
+      return null;
     }
 
-    const cycles = this.extractCycles(periodMeasurements);
     const cycleLengths = cycles.map(cycle => cycle.length);
     const periodLengths = cycles.map(cycle => cycle.periodLength);
 
@@ -27,26 +24,13 @@ export class CycleService {
     };
   }
 
-  static predictNextCycle(measurements: Measurement[]): Prediction {
+  static predictNextCycle(measurements: Measurement[]): Prediction | null {
     const stats = this.calculateCycleStats(measurements);
     const lastPeriodStart = this.getLastPeriodStart(measurements);
     
-    
-    if (!lastPeriodStart) {
-      const today = new Date();
-      const defaultCycleDays = CYCLE_CONSTANTS.DEFAULT_CYCLE_LENGTH * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
-      const ovulationDays = CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
-      const fertileStartDays = (CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION - CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
-      const fertileEndDays = (CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION + CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY;
-      
-      return {
-        nextPeriod: formatLocalDate(new Date(today.getTime() + defaultCycleDays)),
-        ovulation: formatLocalDate(new Date(today.getTime() + ovulationDays)),
-        fertileWindow: {
-          start: formatLocalDate(new Date(today.getTime() + fertileStartDays)),
-          end: formatLocalDate(new Date(today.getTime() + fertileEndDays))
-        }
-      };
+    // Need both stats and last period start to make predictions
+    if (!stats || !lastPeriodStart) {
+      return null;
     }
 
     const nextPeriodDate = new Date(lastPeriodStart.getTime() + stats.averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
@@ -166,7 +150,7 @@ export class CycleService {
     return alerts;
   }
 
-  static getCurrentCycleDay(measurements: Measurement[]): { cycleDay: number; cycleLength: number } | null {
+  static getCurrentCycleDay(measurements: Measurement[]): { cycleDay: number; cycleLength: number | null } | null {
     const lastPeriodStart = this.getLastPeriodStart(measurements);
     if (!lastPeriodStart) return null;
     
@@ -177,7 +161,7 @@ export class CycleService {
     
     return {
       cycleDay: daysSinceLastPeriod,
-      cycleLength: Math.round(stats.averageCycleLength)
+      cycleLength: stats ? Math.round(stats.averageCycleLength) : null
     };
   }
 
