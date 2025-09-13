@@ -17,6 +17,13 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
     const averagePeriodLength = Math.round(stats.averagePeriodLength);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    
+    // Check if we're currently in the ongoing period (from last period start)
+    if (daysSinceLastPeriod >= 0 && daysSinceLastPeriod < averagePeriodLength) {
+      return true;
+    }
+    
+    // Check for future periods
     if (daysSinceLastPeriod < averageCycleLength) return false;
 
     const cycleNumber = Math.floor(daysSinceLastPeriod / averageCycleLength);

@@ -188,4 +188,39 @@ export class CycleService {
     return new Date(periodStart);
   }
 
+  static getCurrentPeriodInfo(measurements: Measurement[]): { isInPeriod: boolean; daysLeftInPeriod: number | null; isPeriodExpectedToday: boolean } {
+    const stats = this.calculateCycleStats(measurements);
+    const lastPeriodStart = this.getLastPeriodStart(measurements);
+    
+    if (!stats || !lastPeriodStart) {
+      return { isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: false };
+    }
+
+    const today = new Date();
+    const daysSinceLastPeriod = Math.floor((today.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const averagePeriodLength = Math.round(stats.averagePeriodLength);
+    const averageCycleLength = Math.round(stats.averageCycleLength);
+
+    // Check if currently in period
+    const isInPeriod = daysSinceLastPeriod >= 0 && daysSinceLastPeriod < averagePeriodLength;
+    const daysLeftInPeriod = isInPeriod ? averagePeriodLength - daysSinceLastPeriod - 1 : null;
+
+    // Check if period is expected to start today
+    const expectedNextPeriodDate = new Date(lastPeriodStart.getTime() + averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const isPeriodExpectedToday = formatLocalDate(today) === formatLocalDate(expectedNextPeriodDate);
+
+    // Check if period hasn't been recorded today but is expected
+    const todayMeasurement = measurements.find(m => 
+      m.date === formatLocalDate(today) && 
+      m.type === 'period' && 
+      (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE
+    );
+
+    return {
+      isInPeriod,
+      daysLeftInPeriod,
+      isPeriodExpectedToday: isPeriodExpectedToday && !todayMeasurement
+    };
+  }
+
 }

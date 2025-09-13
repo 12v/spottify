@@ -205,7 +205,7 @@ export default function HormoneGraph({ currentCycleDay, cycleLength }: HormoneGr
             type: 'line' as const,
             xMin: currentCycleDay - 1,
             xMax: currentCycleDay - 1,
-            borderColor: '#DC2626',
+            borderColor: '#000000',
             borderWidth: 3,
             borderDash: [5, 5],
             label: {

@@ -242,7 +242,7 @@ describe('HormoneGraph', () => {
       expect(annotation.type).toBe('line');
       expect(annotation.xMin).toBe(currentDay - 1); // 0-indexed
       expect(annotation.xMax).toBe(currentDay - 1);
-      expect(annotation.borderColor).toBe('#DC2626');
+      expect(annotation.borderColor).toBe('#000000');
     });
 
     it('sets up hormone datasets with correct styling', () => {

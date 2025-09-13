@@ -18,7 +18,8 @@ vi.mock('../../services/dataService', () => ({
 vi.mock('../../services/cycleService', () => ({
   CycleService: {
     predictNextCycle: vi.fn(),
-    getCurrentCycleDay: vi.fn()
+    getCurrentCycleDay: vi.fn(),
+    getCurrentPeriodInfo: vi.fn()
   }
 }));
 
@@ -84,6 +85,9 @@ describe('Dashboard', () => {
     vi.clearAllMocks();
     vi.useRealTimers();
     
+    // Mock current date to be consistent across tests - Jan 15, 2024
+    vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
+    
     // Reset DOM
     document.body.innerHTML = '';
     
@@ -110,6 +114,7 @@ describe('Dashboard', () => {
     mockDataService.removeDuplicates.mockResolvedValue({ removed: 0, kept: 0 });
     mockCycleService.predictNextCycle.mockReturnValue(null as any);
     mockCycleService.getCurrentCycleDay.mockReturnValue(null as any);
+    mockCycleService.getCurrentPeriodInfo.mockReturnValue({ isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: false });
   });
 
   afterEach(() => {
@@ -140,10 +145,12 @@ describe('Dashboard', () => {
         fertileWindow: { start: '2024-01-14', end: '2024-01-20' }
       };
       const mockCycle = { cycleDay: 15, cycleLength: 28 };
+      const mockPeriodInfo = { isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: false };
 
       mockDataService.getMeasurements.mockResolvedValue(mockMeasurements);
       mockCycleService.predictNextCycle.mockReturnValue(mockPrediction);
       mockCycleService.getCurrentCycleDay.mockReturnValue(mockCycle);
+      mockCycleService.getCurrentPeriodInfo.mockReturnValue(mockPeriodInfo);
 
       renderWithRouter(<Dashboard />);
 
@@ -151,6 +158,7 @@ describe('Dashboard', () => {
         expect(mockDataService.getMeasurements).toHaveBeenCalledWith(mockCurrentUser.uid);
         expect(mockCycleService.predictNextCycle).toHaveBeenCalledWith(mockMeasurements);
         expect(mockCycleService.getCurrentCycleDay).toHaveBeenCalledWith(mockMeasurements);
+        expect(mockCycleService.getCurrentPeriodInfo).toHaveBeenCalledWith(mockMeasurements);
       });
     });
 
@@ -394,10 +402,14 @@ describe('Dashboard', () => {
     });
 
     it('shows predictions when data is available', async () => {
+      // Use dates in the past relative to mocked date (Jan 15, 2024) to test "late" behavior
       const upcomingPrediction = {
-        nextPeriod: '2024-02-01',
-        ovulation: '2024-01-18', 
-        fertileWindow: { start: '2024-01-14', end: '2024-01-20' }
+        nextPeriod: '2023-12-01', // 45 days late from mocked date
+        ovulation: '2023-11-17', // 59 days ago from mocked date 
+        fertileWindow: { 
+          start: '2023-11-13', 
+          end: '2023-11-19'
+        }
       };
       
       // Mock some measurements so predictions show
@@ -410,7 +422,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         // Should show prediction cards instead of getting started
         expect(screen.queryByText('Getting Started')).not.toBeInTheDocument();
-        // Should show prediction grid with countdown information
+        // Should show prediction grid with countdown information for past dates
         expect(screen.getByText('days late')).toBeInTheDocument();
         expect(screen.getByText('days since ovulation')).toBeInTheDocument();
       });
@@ -427,6 +439,69 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByText('nd')).toBeInTheDocument();
         expect(screen.getByText('day of your cycle')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Period State Countdown', () => {
+    it('shows current period countdown when in period', async () => {
+      const mockPeriodInfo = { isInPeriod: true, daysLeftInPeriod: 2, isPeriodExpectedToday: false };
+      const mockPrediction = {
+        nextPeriod: '2024-02-01', // 17 days in future from mocked date
+        ovulation: '2024-01-18', // 3 days in future
+        fertileWindow: { start: '2024-01-14', end: '2024-01-20' }
+      };
+
+      mockCycleService.getCurrentPeriodInfo.mockReturnValue(mockPeriodInfo);
+      mockCycleService.predictNextCycle.mockReturnValue(mockPrediction);
+      
+      renderWithRouter(<Dashboard />);
+
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument();
+        expect(screen.getByText('days left of your current period')).toBeInTheDocument();
+      });
+    });
+
+    it('shows period may start today when expected but not recorded', async () => {
+      const mockPeriodInfo = { isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: true };
+      const mockPrediction = {
+        nextPeriod: '2024-01-15', // Expected today (mocked date)
+        ovulation: '2024-01-01', // 14 days ago
+        fertileWindow: { start: '2023-12-28', end: '2024-01-03' }
+      };
+
+      mockCycleService.getCurrentPeriodInfo.mockReturnValue(mockPeriodInfo);
+      mockCycleService.predictNextCycle.mockReturnValue(mockPrediction);
+      
+      renderWithRouter(<Dashboard />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Today')).toBeInTheDocument();
+        expect(screen.getByText('period may start today')).toBeInTheDocument();
+      });
+    });
+
+    it('shows next period countdown when not in period and not expected today', async () => {
+      const mockPeriodInfo = { isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: false };
+      
+      // Use dates in the future relative to mocked date (Jan 15, 2024) to test "until next period" behavior
+      const mockPrediction = {
+        nextPeriod: '2024-02-10', // 26 days in future from mocked date
+        ovulation: '2024-01-27', // 12 days in future from mocked date
+        fertileWindow: { 
+          start: '2024-01-23', 
+          end: '2024-01-29'
+        }
+      };
+
+      mockCycleService.getCurrentPeriodInfo.mockReturnValue(mockPeriodInfo);
+      mockCycleService.predictNextCycle.mockReturnValue(mockPrediction);
+      
+      renderWithRouter(<Dashboard />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/days until your next period/)).toBeInTheDocument();
       });
     });
   });

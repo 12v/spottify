@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [cleanupRun, setCleanupRun] = useState(false);
   const [currentCycle, setCurrentCycle] = useState<{ cycleDay: number; cycleLength: number | null } | null>(null);
+  const [periodInfo, setPeriodInfo] = useState<{ isInPeriod: boolean; daysLeftInPeriod: number | null; isPeriodExpectedToday: boolean } | null>(null);
   const { error, handleError, clearError, retry } = useErrorHandler();
 
   useEffect(() => {
@@ -40,6 +41,9 @@ export default function Dashboard() {
       
       const cycle = CycleService.getCurrentCycleDay(data);
       setCurrentCycle(cycle);
+      
+      const currentPeriodInfo = CycleService.getCurrentPeriodInfo(data);
+      setPeriodInfo(currentPeriodInfo);
       
       if (!cleanupRun) {
         dataService.removeDuplicates(currentUser.uid).then(cleanupResult => {
@@ -112,10 +116,37 @@ export default function Dashboard() {
       return {
         number: days,
         label: type === 'period' 
-          ? (days === 1 ? 'day until your period' : 'days until your period')
+          ? (days === 1 ? 'day until your next period' : 'days until your next period')
           : (days === 1 ? 'day until ovulation' : 'days until ovulation')
       };
     }
+  }
+
+  function formatPeriodCountdown() {
+    if (!periodInfo) return null;
+
+    if (periodInfo.isPeriodExpectedToday) {
+      return {
+        number: 'Today',
+        label: 'period may start today'
+      };
+    }
+
+    if (periodInfo.isInPeriod && periodInfo.daysLeftInPeriod !== null) {
+      if (periodInfo.daysLeftInPeriod === 0) {
+        return {
+          number: 'Last',
+          label: 'day of your current period'
+        };
+      } else {
+        return {
+          number: periodInfo.daysLeftInPeriod,
+          label: periodInfo.daysLeftInPeriod === 1 ? 'day left of your current period' : 'days left of your current period'
+        };
+      }
+    }
+
+    return null;
   }
 
   if (loading) {
@@ -170,15 +201,28 @@ export default function Dashboard() {
           )}
           <div className="prediction-card">
             {(() => {
-              const days = getDaysUntil(prediction.nextPeriod);
-              const countdown = formatCountdown(days, 'period');
-              return (
-                <>
-                  <div className="countdown">{countdown.number}</div>
-                  <div className="countdown-label">{countdown.label}</div>
-                  <div className="date">{formatDisplayDate(prediction.nextPeriod)}</div>
-                </>
-              );
+              const periodCountdown = formatPeriodCountdown();
+              if (periodCountdown) {
+                return (
+                  <>
+                    <div className="countdown">{periodCountdown.number}</div>
+                    <div className="countdown-label">{periodCountdown.label}</div>
+                    {!periodInfo?.isInPeriod && (
+                      <div className="date">{formatDisplayDate(prediction.nextPeriod)}</div>
+                    )}
+                  </>
+                );
+              } else {
+                const days = getDaysUntil(prediction.nextPeriod);
+                const countdown = formatCountdown(days, 'period');
+                return (
+                  <>
+                    <div className="countdown">{countdown.number}</div>
+                    <div className="countdown-label">{countdown.label}</div>
+                    <div className="date">{formatDisplayDate(prediction.nextPeriod)}</div>
+                  </>
+                );
+              }
             })()}
           </div>
           <div className="prediction-card">
