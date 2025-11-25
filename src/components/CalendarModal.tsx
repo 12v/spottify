@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY, LH_SURGE_STATUS } from '../utils/constants';
 import type { Measurement } from '../types';
 
 interface CalendarModalProps {
@@ -12,6 +12,7 @@ interface CalendarModalProps {
     bbt: string;
     cramps: string;
     soreBreasts: string;
+    lhSurge: boolean;
   }) => Promise<void>;
 }
 
@@ -20,7 +21,8 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
     period: PERIOD_OPTIONS.NONE as string,
     bbt: '',
     cramps: SYMPTOM_SEVERITY.NONE as string,
-    soreBreasts: SYMPTOM_SEVERITY.NONE as string
+    soreBreasts: SYMPTOM_SEVERITY.NONE as string,
+    lhSurge: LH_SURGE_STATUS.NOT_DETECTED as boolean
   });
 
   useEffect(() => {
@@ -29,19 +31,27 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       const bbtData = existingData.find(m => m.type === 'bbt');
       const crampsData = existingData.find(m => m.type === 'cramps');
       const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
+      const lhSurgeData = existingData.find(m => m.type === 'lh_surge');
 
       setMeasurements({
         period: periodData ? (periodData.value as { option: string }).option : PERIOD_OPTIONS.NONE,
         bbt: bbtData ? String((bbtData.value as { temperature: number }).temperature) : '',
         cramps: crampsData ? (crampsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE,
-        soreBreasts: soreBreastsData ? (soreBreastsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE
+        soreBreasts: soreBreastsData ? (soreBreastsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE,
+        lhSurge: lhSurgeData ? (lhSurgeData.value as { detected: boolean }).detected : LH_SURGE_STATUS.NOT_DETECTED
       });
     }
   }, [show, existingData]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await onSave(measurements);
+    await onSave({
+      period: measurements.period,
+      bbt: measurements.bbt,
+      cramps: measurements.cramps,
+      soreBreasts: measurements.soreBreasts,
+      lhSurge: measurements.lhSurge
+    });
     handleClose();
   }
 
@@ -50,7 +60,8 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       period: PERIOD_OPTIONS.NONE as string,
       bbt: '',
       cramps: SYMPTOM_SEVERITY.NONE as string,
-      soreBreasts: SYMPTOM_SEVERITY.NONE as string
+      soreBreasts: SYMPTOM_SEVERITY.NONE as string,
+      lhSurge: LH_SURGE_STATUS.NOT_DETECTED as boolean
     });
     onClose();
   }
@@ -136,6 +147,18 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               placeholder="36.50"
               className="form-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                id="modal-lhSurge"
+                checked={measurements.lhSurge}
+                onChange={(e) => setMeasurements(prev => ({ ...prev, lhSurge: e.target.checked }))}
+              />
+              {' '}LH Surge
+            </label>
           </div>
 
           <div className="form-group">

@@ -39,7 +39,7 @@ vi.mock('../CalendarModal', () => ({
         <div data-testid="modal-date">{date}</div>
         <div data-testid="existing-data-count">{existingData.length}</div>
         <button onClick={onClose} data-testid="modal-close">Close</button>
-        <button onClick={() => onSave({ period: 'medium', bbt: '36.5', cramps: 'mild', soreBreasts: 'none' })} data-testid="modal-save">
+        <button onClick={() => onSave({ period: 'medium', bbt: '36.5', cramps: 'mild', soreBreasts: 'none', lhSurge: false })} data-testid="modal-save">
           Save
         </button>
       </div>
@@ -318,11 +318,12 @@ describe('Calendar', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(mockSaveMeasurement).toHaveBeenCalledTimes(4);
+        expect(mockSaveMeasurement).toHaveBeenCalledTimes(5);
         expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'period', 'medium');
         expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'bbt', '36.5');
         expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'cramps', 'mild');
         expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'sore_breasts', 'none');
+        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'lh_surge', false);
       });
     });
 

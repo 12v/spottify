@@ -216,7 +216,8 @@ describe('CalendarModal', () => {
           period: PERIOD_OPTIONS.MEDIUM,
           bbt: '36.6',
           cramps: SYMPTOM_SEVERITY.MILD,
-          soreBreasts: SYMPTOM_SEVERITY.NONE
+          soreBreasts: SYMPTOM_SEVERITY.NONE,
+          lhSurge: false
         });
       });
     });
@@ -360,7 +361,8 @@ describe('CalendarModal', () => {
           period: PERIOD_OPTIONS.MEDIUM,
           bbt: '36.7',
           cramps: SYMPTOM_SEVERITY.MODERATE,
-          soreBreasts: SYMPTOM_SEVERITY.MILD
+          soreBreasts: SYMPTOM_SEVERITY.MILD,
+          lhSurge: false
         });
       });
     });
@@ -379,7 +381,8 @@ describe('CalendarModal', () => {
           period: PERIOD_OPTIONS.SPOTTING,
           bbt: '',
           cramps: SYMPTOM_SEVERITY.NONE,
-          soreBreasts: SYMPTOM_SEVERITY.NONE
+          soreBreasts: SYMPTOM_SEVERITY.NONE,
+          lhSurge: false
         });
       });
     });
@@ -408,7 +411,8 @@ describe('CalendarModal', () => {
             period: 'medium',
             bbt: '',
             cramps: 'none',
-            soreBreasts: 'none'
+            soreBreasts: 'none',
+            lhSurge: false
           });
         });
 

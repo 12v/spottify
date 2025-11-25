@@ -1,8 +1,8 @@
 export interface Measurement {
   id: string;
   date: string;
-  type: 'period' | 'bbt' | 'cramps' | 'sore_breasts';
-  value: PeriodValue | BbtValue | SeverityValue;
+  type: 'period' | 'bbt' | 'cramps' | 'sore_breasts' | 'lh_surge';
+  value: PeriodValue | BbtValue | SeverityValue | LhSurgeValue;
 }
 
 export interface PeriodValue {
@@ -15,6 +15,10 @@ export interface BbtValue {
 
 export interface SeverityValue {
   severity: string;
+}
+
+export interface LhSurgeValue {
+  detected: boolean;
 }
 
 export interface CycleStats {

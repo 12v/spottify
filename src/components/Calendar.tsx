@@ -96,11 +96,13 @@ export default function Calendar() {
     bbt: string;
     cramps: string;
     soreBreasts: string;
+    lhSurge: boolean;
   }) => {
     await saveMeasurement(modalDate, 'period', modalMeasurements.period);
     await saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt);
     await saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps);
     await saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts);
+    await saveMeasurement(modalDate, 'lh_surge', modalMeasurements.lhSurge);
   }, [modalDate, saveMeasurement]);
 
   const monthYear = useMemo(() => 

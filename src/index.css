@@ -470,6 +470,42 @@ body {
   position: relative;
 }
 
+.lh-surge-selector {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.lh-surge-button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lh-surge-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.lh-surge-button.selected {
+  border-color: #8B0000;
+  box-shadow: 0 0 0 1px #8B0000;
+}
+
+.lh-indicator {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
 .chart canvas {
   height: 300px;
 }

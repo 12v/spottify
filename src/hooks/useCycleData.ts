@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
-import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../utils/constants';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY, LH_SURGE_STATUS } from '../utils/constants';
 import type { Measurement, CycleStats } from '../types';
 
 export function useCycleData() {
@@ -40,7 +40,7 @@ export function useCycleData() {
     }
   }
 
-  async function saveMeasurement(date: string, type: string, value: string | number) {
+  async function saveMeasurement(date: string, type: string, value: string | number | boolean) {
     if (!currentUser) return;
 
     try {
@@ -58,6 +58,18 @@ export function useCycleData() {
             type,
             date,
             value: type === 'period' ? { option: value as string } : { severity: value as string }
+          }));
+        }
+      } else if (type === 'lh_surge') {
+        if (value === LH_SURGE_STATUS.NOT_DETECTED) {
+          if (existing) {
+            promises.push(DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id));
+          }
+        } else {
+          promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
+            type: 'lh_surge',
+            date,
+            value: { detected: true }
           }));
         }
       } else if (type === 'bbt' && value) {

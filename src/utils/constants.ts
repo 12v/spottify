@@ -24,3 +24,8 @@ export const SYMPTOM_SEVERITY = {
   MODERATE: 'moderate',
   SEVERE: 'severe',
 } as const;
+
+export const LH_SURGE_STATUS = {
+  NOT_DETECTED: false,
+  DETECTED: true,
+} as const;

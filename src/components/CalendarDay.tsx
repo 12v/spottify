@@ -49,11 +49,13 @@ function CalendarDay({
     const period = measurements.find(m => m.type === 'period');
     const bbt = measurements.find(m => m.type === 'bbt');
     const symptoms = measurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
+    const lhSurge = measurements.find(m => m.type === 'lh_surge');
 
     return {
       period: period ? (period.value as { option: string }).option : null,
       bbt: bbt ? (bbt.value as { temperature: number }).temperature : null,
-      symptoms: symptoms.length
+      symptoms: symptoms.length,
+      lhSurge: lhSurge ? (lhSurge.value as { detected: boolean }).detected : false
     };
   }
 
@@ -121,6 +123,17 @@ function CalendarDay({
             lineHeight: '1'
           }}>
             🥚
+          </div>
+        )}
+
+        {dayData.lhSurge && (
+          <div style={{
+            textAlign: 'center',
+            fontSize: '14px',
+            lineHeight: '1',
+            marginBottom: '2px'
+          }}>
+            ↑
           </div>
         )}
 
