@@ -61,87 +61,61 @@ export default function Statistics() {
   const cycleData = CycleService.getCycleData(measurements);
   const dataAlerts = CycleService.checkIncompleteData(measurements);
 
-  // Prepare cycle length line chart
-  const cycleLengthChart = {
-    labels: cycleData.map((_, index) => `Cycle ${index + 1}`),
-    datasets: [
-      {
-        label: 'Cycle Length (days)',
-        data: cycleData.map(cycle => cycle.cycleLength),
-        borderColor: '#8B0000',
-        backgroundColor: 'rgba(139, 0, 0, 0.1)',
-        tension: 0.2,
-      }
-    ]
-  };
+  // Helper function to create histogram data with contiguous range
+  function createHistogramData(
+    data: Array<{ cycleLength?: number; periodLength?: number }>,
+    key: 'cycleLength' | 'periodLength',
+    label: string,
+    backgroundColor: string,
+    borderColor: string
+  ) {
+    const counts = data.reduce((acc, item) => {
+      const value = item[key]!;
+      acc[value] = (acc[value] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
 
-  // Prepare period length line chart
-  const periodLengthChart = {
-    labels: cycleData.map((_, index) => `Cycle ${index + 1}`),
-    datasets: [
-      {
-        label: 'Period Length (days)',
-        data: cycleData.map(cycle => cycle.periodLength),
-        borderColor: '#A52A2A',
-        backgroundColor: 'rgba(165, 42, 42, 0.1)',
-        tension: 0.2,
-      }
-    ]
-  };
+    const values = Object.keys(counts).map(k => parseInt(k));
+    const min = values.length > 0 ? Math.min(...values) : 0;
+    const max = values.length > 0 ? Math.max(...values) : 0;
+    const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
-  // Prepare cycle length histogram
-  const cycleLengthCounts = cycleData.reduce((acc, cycle) => {
-    acc[cycle.cycleLength] = (acc[cycle.cycleLength] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
-
-  const cycleLengths = Object.keys(cycleLengthCounts).map(k => parseInt(k));
-  const minCycleLength = cycleLengths.length > 0 ? Math.min(...cycleLengths) : 0;
-  const maxCycleLength = cycleLengths.length > 0 ? Math.max(...cycleLengths) : 0;
-  const cycleLengthRange = Array.from(
-    { length: maxCycleLength - minCycleLength + 1 },
-    (_, i) => minCycleLength + i
-  );
-
-  const cycleLengthHistogram = {
-    labels: cycleLengthRange.map(String),
-    datasets: [
-      {
-        label: 'Number of Cycles',
-        data: cycleLengthRange.map(length => cycleLengthCounts[length] || 0),
-        backgroundColor: 'rgba(139, 0, 0, 0.6)',
-        borderColor: '#8B0000',
+    return {
+      labels: range.map(String),
+      datasets: [{
+        label,
+        data: range.map(v => counts[v] || 0),
+        backgroundColor,
+        borderColor,
         borderWidth: 1,
-      }
-    ]
-  };
+      }]
+    };
+  }
 
-  // Prepare period length histogram
-  const periodLengthCounts = cycleData.reduce((acc, cycle) => {
-    acc[cycle.periodLength] = (acc[cycle.periodLength] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  // Helper function to create line chart data
+  function createLineChartData(
+    key: 'cycleLength' | 'periodLength',
+    label: string,
+    borderColor: string,
+    backgroundColor: string
+  ) {
+    return {
+      labels: cycleData.map((_, index) => `Cycle ${index + 1}`),
+      datasets: [{
+        label,
+        data: cycleData.map(cycle => cycle[key]),
+        borderColor,
+        backgroundColor,
+        tension: 0.2,
+      }]
+    };
+  }
 
-  const periodLengths = Object.keys(periodLengthCounts).map(k => parseInt(k));
-  const minPeriodLength = periodLengths.length > 0 ? Math.min(...periodLengths) : 0;
-  const maxPeriodLength = periodLengths.length > 0 ? Math.max(...periodLengths) : 0;
-  const periodLengthRange = Array.from(
-    { length: maxPeriodLength - minPeriodLength + 1 },
-    (_, i) => minPeriodLength + i
-  );
+  const cycleLengthChart = createLineChartData('cycleLength', 'Cycle Length (days)', '#8B0000', 'rgba(139, 0, 0, 0.1)');
+  const periodLengthChart = createLineChartData('periodLength', 'Period Length (days)', '#A52A2A', 'rgba(165, 42, 42, 0.1)');
 
-  const periodLengthHistogram = {
-    labels: periodLengthRange.map(String),
-    datasets: [
-      {
-        label: 'Number of Periods',
-        data: periodLengthRange.map(length => periodLengthCounts[length] || 0),
-        backgroundColor: 'rgba(165, 42, 42, 0.6)',
-        borderColor: '#A52A2A',
-        borderWidth: 1,
-      }
-    ]
-  };
+  const cycleLengthHistogram = createHistogramData(cycleData, 'cycleLength', 'Number of Cycles', 'rgba(139, 0, 0, 0.6)', '#8B0000');
+  const periodLengthHistogram = createHistogramData(cycleData, 'periodLength', 'Number of Periods', 'rgba(165, 42, 42, 0.6)', '#A52A2A');
 
   const chartOptions = {
     responsive: true,
