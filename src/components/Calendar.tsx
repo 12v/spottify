@@ -10,7 +10,7 @@ import CalendarDay from './CalendarDay';
 export default function Calendar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { measurements, groupedMeasurements, stats, loading, saveMeasurement } = useCycleData();
+  const { measurements, groupedMeasurements, stats, loading, saveBatchMeasurements } = useCycleData();
   
   const [currentDate, setCurrentDate] = useState(() => {
     const yearParam = searchParams.get('year');
@@ -98,12 +98,14 @@ export default function Calendar() {
     soreBreasts: string;
     lhSurge: boolean;
   }) => {
-    await saveMeasurement(modalDate, 'period', modalMeasurements.period);
-    await saveMeasurement(modalDate, 'bbt', modalMeasurements.bbt);
-    await saveMeasurement(modalDate, 'cramps', modalMeasurements.cramps);
-    await saveMeasurement(modalDate, 'sore_breasts', modalMeasurements.soreBreasts);
-    await saveMeasurement(modalDate, 'lh_surge', modalMeasurements.lhSurge);
-  }, [modalDate, saveMeasurement]);
+    await saveBatchMeasurements(modalDate, [
+      { type: 'period', value: modalMeasurements.period },
+      { type: 'bbt', value: modalMeasurements.bbt },
+      { type: 'cramps', value: modalMeasurements.cramps },
+      { type: 'sore_breasts', value: modalMeasurements.soreBreasts },
+      { type: 'lh_surge', value: modalMeasurements.lhSurge }
+    ]);
+  }, [modalDate, saveBatchMeasurements]);
 
   const monthYear = useMemo(() => 
     currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })

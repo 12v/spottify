@@ -87,7 +87,8 @@ describe('Calendar', () => {
     stats: null,
     loading: false,
     loadData: vi.fn(),
-    saveMeasurement: vi.fn()
+    saveMeasurement: vi.fn(),
+    saveBatchMeasurements: vi.fn()
   };
 
   const defaultPredictions = {
@@ -300,10 +301,10 @@ describe('Calendar', () => {
     });
 
     it('saves measurements when modal save is clicked', async () => {
-      const mockSaveMeasurement = vi.fn().mockResolvedValue(undefined);
+      const mockSaveBatchMeasurements = vi.fn().mockResolvedValue(undefined);
       mockUseCycleData.mockReturnValue({
         ...defaultCycleData,
-        saveMeasurement: mockSaveMeasurement
+        saveBatchMeasurements: mockSaveBatchMeasurements
       });
 
       renderWithRouter(<Calendar />);
@@ -318,12 +319,14 @@ describe('Calendar', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(mockSaveMeasurement).toHaveBeenCalledTimes(5);
-        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'period', 'medium');
-        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'bbt', '36.5');
-        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'cramps', 'mild');
-        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'sore_breasts', 'none');
-        expect(mockSaveMeasurement).toHaveBeenCalledWith('2024-03-15', 'lh_surge', false);
+        expect(mockSaveBatchMeasurements).toHaveBeenCalledTimes(1);
+        expect(mockSaveBatchMeasurements).toHaveBeenCalledWith('2024-03-15', [
+          { type: 'period', value: 'medium' },
+          { type: 'bbt', value: '36.5' },
+          { type: 'cramps', value: 'mild' },
+          { type: 'sore_breasts', value: 'none' },
+          { type: 'lh_surge', value: false }
+        ]);
       });
     });
 

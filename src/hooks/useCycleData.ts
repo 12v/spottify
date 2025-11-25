@@ -43,44 +43,48 @@ export function useCycleData() {
   async function saveMeasurement(date: string, type: string, value: string | number | boolean) {
     if (!currentUser) return;
 
-    try {
-      const promises = [];
+    const existing = groupedMeasurements[date]?.find(m => m.type === type);
 
-      const existing = groupedMeasurements[date]?.find(m => m.type === type);
-      
-      if (type === 'period' || type === 'cramps' || type === 'sore_breasts') {
-        if (value === PERIOD_OPTIONS.NONE || value === SYMPTOM_SEVERITY.NONE) {
-          if (existing) {
-            promises.push(DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id));
-          }
-        } else {
-          promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
-            type,
-            date,
-            value: type === 'period' ? { option: value as string } : { severity: value as string }
-          }));
+    if (type === 'period' || type === 'cramps' || type === 'sore_breasts') {
+      if (value === PERIOD_OPTIONS.NONE || value === SYMPTOM_SEVERITY.NONE) {
+        if (existing) {
+          await DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id);
         }
-      } else if (type === 'lh_surge') {
-        if (value === LH_SURGE_STATUS.NOT_DETECTED) {
-          if (existing) {
-            promises.push(DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id));
-          }
-        } else {
-          promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
-            type: 'lh_surge',
-            date,
-            value: { detected: true }
-          }));
-        }
-      } else if (type === 'bbt' && value) {
-        promises.push(DataService.getInstance().addMeasurement(currentUser.uid, {
+      } else {
+        await DataService.getInstance().addMeasurement(currentUser.uid, {
           type,
           date,
-          value: { temperature: parseFloat(value as string) }
-        }));
+          value: type === 'period' ? { option: value as string } : { severity: value as string }
+        });
       }
+    } else if (type === 'lh_surge') {
+      if (value === LH_SURGE_STATUS.NOT_DETECTED) {
+        if (existing) {
+          await DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id);
+        }
+      } else {
+        await DataService.getInstance().addMeasurement(currentUser.uid, {
+          type: 'lh_surge',
+          date,
+          value: { detected: true }
+        });
+      }
+    } else if (type === 'bbt' && value) {
+      await DataService.getInstance().addMeasurement(currentUser.uid, {
+        type,
+        date,
+        value: { temperature: parseFloat(value as string) }
+      });
+    }
+  }
 
-      await Promise.all(promises);
+  async function saveBatchMeasurements(date: string, measurements: Array<{type: string, value: string | number | boolean}>) {
+    if (!currentUser) return;
+
+    try {
+      for (const measurement of measurements) {
+        await saveMeasurement(date, measurement.type, measurement.value);
+      }
       await loadData();
     } catch (error) {
       console.error('Error saving data:', error);
@@ -99,6 +103,6 @@ export function useCycleData() {
     stats,
     loading,
     loadData,
-    saveMeasurement
+    saveBatchMeasurements
   };
 }
