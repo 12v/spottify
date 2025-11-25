@@ -178,7 +178,7 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
         min: 35.5,
         max: 38.0,
         ticks: {
-          callback: (value) => `${value}°C`
+          callback: (value) => Number(value).toFixed(1)
         }
       }
     }

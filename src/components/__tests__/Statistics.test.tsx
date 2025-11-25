@@ -335,10 +335,10 @@ describe('Statistics', () => {
         const barCharts = screen.getAllByTestId('bar-chart');
         const cycleLengthHistogram = barCharts[0];
         const chartData = JSON.parse(cycleLengthHistogram.querySelector('[data-testid="chart-data"]')?.textContent || '{}');
-        
-        expect(chartData.labels).toEqual(['28', '30']);
+
+        expect(chartData.labels).toEqual(['28', '29', '30']);
         expect(chartData.datasets[0].label).toBe('Number of Cycles');
-        expect(chartData.datasets[0].data).toEqual([3, 1]); // 3 cycles of length 28, 1 cycle of length 30
+        expect(chartData.datasets[0].data).toEqual([3, 0, 1]); // 3 cycles of length 28, 0 of 29, 1 cycle of length 30
       });
     });
 
@@ -357,7 +357,7 @@ describe('Statistics', () => {
         const barCharts = screen.getAllByTestId('bar-chart');
         const periodLengthHistogram = barCharts[1];
         const chartData = JSON.parse(periodLengthHistogram.querySelector('[data-testid="chart-data"]')?.textContent || '{}');
-        
+
         expect(chartData.labels).toEqual(['5', '6']);
         expect(chartData.datasets[0].label).toBe('Number of Periods');
         expect(chartData.datasets[0].data).toEqual([2, 1]); // 2 periods of length 5, 1 period of length 6
@@ -498,9 +498,9 @@ describe('Statistics', () => {
         const barCharts = screen.getAllByTestId('bar-chart');
         const cycleLengthHistogram = barCharts[0];
         const chartData = JSON.parse(cycleLengthHistogram.querySelector('[data-testid="chart-data"]')?.textContent || '{}');
-        
-        // Should be sorted numerically: 8, 25, 30 (not lexicographically: 25, 30, 8)
-        expect(chartData.labels).toEqual(['8', '25', '30']);
+
+        // Should be sorted numerically with contiguous range: 8-30
+        expect(chartData.labels).toEqual(['8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30']);
       });
     });
   });

@@ -95,14 +95,20 @@ export default function Statistics() {
     return acc;
   }, {} as Record<number, number>);
 
+  const cycleLengths = Object.keys(cycleLengthCounts).map(k => parseInt(k));
+  const minCycleLength = cycleLengths.length > 0 ? Math.min(...cycleLengths) : 0;
+  const maxCycleLength = cycleLengths.length > 0 ? Math.max(...cycleLengths) : 0;
+  const cycleLengthRange = Array.from(
+    { length: maxCycleLength - minCycleLength + 1 },
+    (_, i) => minCycleLength + i
+  );
+
   const cycleLengthHistogram = {
-    labels: Object.keys(cycleLengthCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+    labels: cycleLengthRange.map(String),
     datasets: [
       {
         label: 'Number of Cycles',
-        data: Object.keys(cycleLengthCounts)
-          .sort((a, b) => parseInt(a) - parseInt(b))
-          .map(key => cycleLengthCounts[parseInt(key)]),
+        data: cycleLengthRange.map(length => cycleLengthCounts[length] || 0),
         backgroundColor: 'rgba(139, 0, 0, 0.6)',
         borderColor: '#8B0000',
         borderWidth: 1,
@@ -116,14 +122,20 @@ export default function Statistics() {
     return acc;
   }, {} as Record<number, number>);
 
+  const periodLengths = Object.keys(periodLengthCounts).map(k => parseInt(k));
+  const minPeriodLength = periodLengths.length > 0 ? Math.min(...periodLengths) : 0;
+  const maxPeriodLength = periodLengths.length > 0 ? Math.max(...periodLengths) : 0;
+  const periodLengthRange = Array.from(
+    { length: maxPeriodLength - minPeriodLength + 1 },
+    (_, i) => minPeriodLength + i
+  );
+
   const periodLengthHistogram = {
-    labels: Object.keys(periodLengthCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+    labels: periodLengthRange.map(String),
     datasets: [
       {
         label: 'Number of Periods',
-        data: Object.keys(periodLengthCounts)
-          .sort((a, b) => parseInt(a) - parseInt(b))
-          .map(key => periodLengthCounts[parseInt(key)]),
+        data: periodLengthRange.map(length => periodLengthCounts[length] || 0),
         backgroundColor: 'rgba(165, 42, 42, 0.6)',
         borderColor: '#A52A2A',
         borderWidth: 1,
