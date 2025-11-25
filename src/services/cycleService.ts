@@ -191,7 +191,7 @@ export class CycleService {
   static getCurrentPeriodInfo(measurements: Measurement[]): { isInPeriod: boolean; daysLeftInPeriod: number | null; isPeriodExpectedToday: boolean } {
     const stats = this.calculateCycleStats(measurements);
     const lastPeriodStart = this.getLastPeriodStart(measurements);
-    
+
     if (!stats || !lastPeriodStart) {
       return { isInPeriod: false, daysLeftInPeriod: null, isPeriodExpectedToday: false };
     }
@@ -210,9 +210,9 @@ export class CycleService {
     const isPeriodExpectedToday = formatLocalDate(today) === formatLocalDate(expectedNextPeriodDate);
 
     // Check if period hasn't been recorded today but is expected
-    const todayMeasurement = measurements.find(m => 
-      m.date === formatLocalDate(today) && 
-      m.type === 'period' && 
+    const todayMeasurement = measurements.find(m =>
+      m.date === formatLocalDate(today) &&
+      m.type === 'period' &&
       (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE
     );
 
@@ -221,6 +221,111 @@ export class CycleService {
       daysLeftInPeriod,
       isPeriodExpectedToday: isPeriodExpectedToday && !todayMeasurement
     };
+  }
+
+  static getBbtByRelativeCycleDay(measurements: Measurement[]): Array<{ cycleDay: number; temperature: number; date: string; cycleNumber: number }> {
+    const bbtMeasurements = measurements
+      .filter(m => m.type === 'bbt')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const periodMeasurements = measurements
+      .filter(m => m.type === 'period' &&
+        (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE &&
+        (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (periodMeasurements.length === 0) return [];
+
+    const cycles = this.extractCycles(periodMeasurements);
+    const result: Array<{ cycleDay: number; temperature: number; date: string; cycleNumber: number }> = [];
+
+    cycles.forEach((cycle, cycleIndex) => {
+      const cycleStartDate = new Date(cycle.measurements[0].date);
+
+      const cycleEndDate = cycleIndex < cycles.length - 1
+        ? new Date(cycles[cycleIndex + 1].measurements[0].date)
+        : new Date();
+
+      bbtMeasurements.forEach(bbt => {
+        const bbtDate = new Date(bbt.date);
+        if (bbtDate >= cycleStartDate && bbtDate < cycleEndDate) {
+          const cycleDay = Math.floor(
+            (bbtDate.getTime() - cycleStartDate.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY
+          ) + 1;
+
+          result.push({
+            cycleDay,
+            temperature: (bbt.value as { temperature: number }).temperature,
+            date: bbt.date,
+            cycleNumber: cycleIndex + 1
+          });
+        }
+      });
+    });
+
+    return result;
+  }
+
+  static getHistoricalBbtAverage(measurements: Measurement[]): Array<{ cycleDay: number; avgTemperature: number; dataPointCount: number }> {
+    const allBbtData = this.getBbtByRelativeCycleDay(measurements);
+
+    if (allBbtData.length === 0) return [];
+
+    const maxCycleNumber = Math.max(...allBbtData.map(d => d.cycleNumber));
+    const historicalData = allBbtData.filter(d => d.cycleNumber < maxCycleNumber);
+
+    if (historicalData.length === 0) return [];
+
+    const groupedByCycleDay = historicalData.reduce((acc, curr) => {
+      if (!acc[curr.cycleDay]) {
+        acc[curr.cycleDay] = [];
+      }
+      acc[curr.cycleDay].push(curr.temperature);
+      return acc;
+    }, {} as Record<number, number[]>);
+
+    const result: Array<{ cycleDay: number; avgTemperature: number; dataPointCount: number }> = [];
+
+    Object.entries(groupedByCycleDay).forEach(([cycleDayStr, temps]) => {
+      if (temps.length >= 2) {
+        const avg = temps.reduce((sum, t) => sum + t, 0) / temps.length;
+        result.push({
+          cycleDay: parseInt(cycleDayStr),
+          avgTemperature: Math.round(avg * 100) / 100,
+          dataPointCount: temps.length
+        });
+      }
+    });
+
+    return result.sort((a, b) => a.cycleDay - b.cycleDay);
+  }
+
+  static getCurrentCycleBbt(measurements: Measurement[]): Array<{ cycleDay: number; temperature: number; date: string }> {
+    const lastPeriodStart = this.getLastPeriodStart(measurements);
+    if (!lastPeriodStart) return [];
+
+    const bbtMeasurements = measurements
+      .filter(m => m.type === 'bbt')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const result: Array<{ cycleDay: number; temperature: number; date: string }> = [];
+
+    bbtMeasurements.forEach(bbt => {
+      const bbtDate = new Date(bbt.date);
+      if (bbtDate >= lastPeriodStart) {
+        const cycleDay = Math.floor(
+          (bbtDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY
+        ) + 1;
+
+        result.push({
+          cycleDay,
+          temperature: (bbt.value as { temperature: number }).temperature,
+          date: bbt.date
+        });
+      }
+    });
+
+    return result;
   }
 
 }

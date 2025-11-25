@@ -53,6 +53,15 @@ vi.mock('../HormoneGraph', () => ({
   )
 }));
 
+vi.mock('../BbtGraph', () => ({
+  __esModule: true,
+  default: ({ currentCycleDay }: { currentCycleDay: number }) => (
+    <div data-testid="bbt-graph">
+      BBT Graph - Day {currentCycleDay}
+    </div>
+  )
+}));
+
 // Mock date utilities
 vi.mock('../../utils/dateUtils', () => ({
   formatLocalDate: vi.fn((date) => date.toISOString().split('T')[0]),

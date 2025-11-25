@@ -465,6 +465,11 @@ body {
   position: relative;
 }
 
+.bbt-chart-container {
+  height: 300px;
+  position: relative;
+}
+
 .chart canvas {
   height: 300px;
 }

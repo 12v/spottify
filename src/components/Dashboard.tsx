@@ -8,6 +8,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import HormoneGraph from './HormoneGraph';
+import BbtGraph from './BbtGraph';
 import type { Measurement, Prediction } from '../types';
 
 export default function Dashboard() {
@@ -180,9 +181,16 @@ export default function Dashboard() {
       )}
 
       {currentCycle && currentCycle.cycleLength && (
-        <HormoneGraph 
+        <HormoneGraph
           currentCycleDay={currentCycle.cycleDay}
           cycleLength={currentCycle.cycleLength}
+        />
+      )}
+
+      {currentCycle && measurements.length > 0 && (
+        <BbtGraph
+          currentCycleDay={currentCycle.cycleDay}
+          measurements={measurements}
         />
       )}
 
