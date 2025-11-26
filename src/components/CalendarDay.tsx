@@ -51,11 +51,23 @@ function CalendarDay({
     const symptoms = measurements.filter(m => m.type === 'cramps' || m.type === 'sore_breasts');
     const lhSurge = measurements.find(m => m.type === 'lh_surge');
 
+    let lhSurgeStatus = null;
+    if (lhSurge) {
+      const value = lhSurge.value as { detected?: boolean; status?: string };
+      if (typeof value.detected === 'boolean') {
+        // Old format migration
+        lhSurgeStatus = value.detected ? 'positive' : 'negative';
+      } else if (typeof value.status === 'string') {
+        // New format
+        lhSurgeStatus = value.status;
+      }
+    }
+
     return {
       period: period ? (period.value as { option: string }).option : null,
       bbt: bbt ? (bbt.value as { temperature: number }).temperature : null,
       symptoms: symptoms.length,
-      lhSurge: lhSurge ? (lhSurge.value as { detected: boolean }).detected : false
+      lhSurge: lhSurgeStatus
     };
   }
 
@@ -126,7 +138,7 @@ function CalendarDay({
           </div>
         )}
 
-        {dayData.lhSurge && (
+        {dayData.lhSurge === 'positive' && (
           <div style={{
             textAlign: 'center',
             fontSize: '14px',
@@ -134,6 +146,18 @@ function CalendarDay({
             marginBottom: '2px'
           }}>
             ↑
+          </div>
+        )}
+
+        {dayData.lhSurge === 'negative' && (
+          <div style={{
+            textAlign: 'center',
+            fontSize: '14px',
+            lineHeight: '1',
+            marginBottom: '2px',
+            color: '#999'
+          }}>
+            —
           </div>
         )}
 

@@ -96,7 +96,7 @@ export default function Calendar() {
     bbt: string;
     cramps: string;
     soreBreasts: string;
-    lhSurge: boolean;
+    lhSurge: string;
   }) => {
     await saveBatchMeasurements(modalDate, [
       { type: 'period', value: modalMeasurements.period },

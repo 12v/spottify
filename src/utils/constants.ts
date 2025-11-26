@@ -26,6 +26,7 @@ export const SYMPTOM_SEVERITY = {
 } as const;
 
 export const LH_SURGE_STATUS = {
-  NOT_DETECTED: false,
-  DETECTED: true,
+  NOT_TESTED: 'not_tested',
+  NEGATIVE: 'negative',
+  POSITIVE: 'positive',
 } as const;

@@ -18,7 +18,7 @@ export interface SeverityValue {
 }
 
 export interface LhSurgeValue {
-  detected: boolean;
+  status: string;
 }
 
 export interface CycleStats {

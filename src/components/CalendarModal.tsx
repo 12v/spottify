@@ -12,7 +12,7 @@ interface CalendarModalProps {
     bbt: string;
     cramps: string;
     soreBreasts: string;
-    lhSurge: boolean;
+    lhSurge: string;
   }) => Promise<void>;
 }
 
@@ -22,7 +22,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
     bbt: '',
     cramps: SYMPTOM_SEVERITY.NONE as string,
     soreBreasts: SYMPTOM_SEVERITY.NONE as string,
-    lhSurge: LH_SURGE_STATUS.NOT_DETECTED as boolean
+    lhSurge: LH_SURGE_STATUS.NOT_TESTED as string
   });
 
   useEffect(() => {
@@ -33,12 +33,24 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       const soreBreastsData = existingData.find(m => m.type === 'sore_breasts');
       const lhSurgeData = existingData.find(m => m.type === 'lh_surge');
 
+      let lhSurgeValue: string = LH_SURGE_STATUS.NOT_TESTED;
+      if (lhSurgeData) {
+        const value = lhSurgeData.value as { detected?: boolean; status?: string };
+        if (typeof value.detected === 'boolean') {
+          // Old format migration
+          lhSurgeValue = value.detected ? LH_SURGE_STATUS.POSITIVE : LH_SURGE_STATUS.NEGATIVE;
+        } else if (typeof value.status === 'string') {
+          // New format
+          lhSurgeValue = value.status;
+        }
+      }
+
       setMeasurements({
         period: periodData ? (periodData.value as { option: string }).option : PERIOD_OPTIONS.NONE,
         bbt: bbtData ? String((bbtData.value as { temperature: number }).temperature) : '',
         cramps: crampsData ? (crampsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE,
         soreBreasts: soreBreastsData ? (soreBreastsData.value as { severity: string }).severity : SYMPTOM_SEVERITY.NONE,
-        lhSurge: lhSurgeData ? (lhSurgeData.value as { detected: boolean }).detected : LH_SURGE_STATUS.NOT_DETECTED
+        lhSurge: lhSurgeValue
       });
     }
   }, [show, existingData]);
@@ -61,7 +73,7 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
       bbt: '',
       cramps: SYMPTOM_SEVERITY.NONE as string,
       soreBreasts: SYMPTOM_SEVERITY.NONE as string,
-      lhSurge: LH_SURGE_STATUS.NOT_DETECTED as boolean
+      lhSurge: LH_SURGE_STATUS.NOT_TESTED as string
     });
     onClose();
   }
@@ -150,15 +162,17 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
           </div>
 
           <div className="form-group">
-            <label>
-              <input
-                type="checkbox"
-                id="modal-lhSurge"
-                checked={measurements.lhSurge}
-                onChange={(e) => setMeasurements(prev => ({ ...prev, lhSurge: e.target.checked }))}
-              />
-              {' '}LH Surge
-            </label>
+            <label htmlFor="modal-lhSurge">LH Surge</label>
+            <select
+              id="modal-lhSurge"
+              value={measurements.lhSurge}
+              onChange={(e) => setMeasurements(prev => ({ ...prev, lhSurge: e.target.value }))}
+              className="form-input"
+            >
+              <option value={LH_SURGE_STATUS.POSITIVE}>Detected</option>
+              <option value={LH_SURGE_STATUS.NEGATIVE}>Not detected</option>
+              <option value={LH_SURGE_STATUS.NOT_TESTED}>Not tested</option>
+            </select>
           </div>
 
           <div className="form-group">

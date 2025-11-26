@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CalendarModal from '../CalendarModal';
-import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../../utils/constants';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY, LH_SURGE_STATUS } from '../../utils/constants';
+import type { Measurement } from '../../types';
 import { vi } from 'vitest';
 
 describe('CalendarModal', () => {
@@ -198,6 +199,102 @@ describe('CalendarModal', () => {
     });
   });
 
+  describe('LH Surge Selection', () => {
+    it('initializes to not tested by default', () => {
+      render(<CalendarModal {...defaultProps} />);
+
+      const lhSurgeSelect = screen.getByLabelText(/LH Surge/);
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.NOT_TESTED);
+    });
+
+    it('allows selecting positive result', () => {
+      render(<CalendarModal {...defaultProps} />);
+      const lhSurgeSelect = screen.getByLabelText(/LH Surge/);
+
+      fireEvent.change(lhSurgeSelect, { target: { value: LH_SURGE_STATUS.POSITIVE } });
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.POSITIVE);
+    });
+
+    it('allows selecting negative result', () => {
+      render(<CalendarModal {...defaultProps} />);
+      const lhSurgeSelect = screen.getByLabelText(/LH Surge/);
+
+      fireEvent.change(lhSurgeSelect, { target: { value: LH_SURGE_STATUS.NEGATIVE } });
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.NEGATIVE);
+    });
+
+    it('allows switching between all three states', () => {
+      render(<CalendarModal {...defaultProps} />);
+      const lhSurgeSelect = screen.getByLabelText(/LH Surge/);
+
+      // Start at Not Tested
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.NOT_TESTED);
+
+      // Switch to Detected
+      fireEvent.change(lhSurgeSelect, { target: { value: LH_SURGE_STATUS.POSITIVE } });
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.POSITIVE);
+
+      // Switch to Not Detected
+      fireEvent.change(lhSurgeSelect, { target: { value: LH_SURGE_STATUS.NEGATIVE } });
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.NEGATIVE);
+
+      // Switch back to Not Tested
+      fireEvent.change(lhSurgeSelect, { target: { value: LH_SURGE_STATUS.NOT_TESTED } });
+      expect(lhSurgeSelect).toHaveValue(LH_SURGE_STATUS.NOT_TESTED);
+    });
+
+    it('loads existing positive result correctly', () => {
+      const existingData = [
+        {
+          id: 'lh-1',
+          date: '2024-01-15',
+          type: 'lh_surge' as const,
+          value: { status: LH_SURGE_STATUS.POSITIVE }
+        }
+      ];
+
+      render(<CalendarModal {...defaultProps} existingData={existingData} />);
+      expect(screen.getByLabelText(/LH Surge/)).toHaveValue(LH_SURGE_STATUS.POSITIVE);
+    });
+
+    it('loads existing negative result correctly', () => {
+      const existingData = [
+        {
+          id: 'lh-1',
+          date: '2024-01-15',
+          type: 'lh_surge' as const,
+          value: { status: LH_SURGE_STATUS.NEGATIVE }
+        }
+      ];
+
+      render(<CalendarModal {...defaultProps} existingData={existingData} />);
+      expect(screen.getByLabelText(/LH Surge/)).toHaveValue(LH_SURGE_STATUS.NEGATIVE);
+    });
+
+    it('handles old boolean format data (migration)', () => {
+      const existingData = [
+        {
+          id: 'lh-1',
+          date: '2024-01-15',
+          type: 'lh_surge' as const,
+          value: { detected: true }
+        }
+      ] as unknown as Measurement[];
+
+      render(<CalendarModal {...defaultProps} existingData={existingData} />);
+      expect(screen.getByLabelText(/LH Surge/)).toHaveValue(LH_SURGE_STATUS.POSITIVE);
+    });
+
+    it('shows all LH surge options', () => {
+      render(<CalendarModal {...defaultProps} />);
+      const lhSurgeSelect = screen.getByLabelText(/LH Surge/);
+
+      expect(lhSurgeSelect.querySelector(`option[value="${LH_SURGE_STATUS.NOT_TESTED}"]`)).toBeInTheDocument();
+      expect(lhSurgeSelect.querySelector(`option[value="${LH_SURGE_STATUS.NEGATIVE}"]`)).toBeInTheDocument();
+      expect(lhSurgeSelect.querySelector(`option[value="${LH_SURGE_STATUS.POSITIVE}"]`)).toBeInTheDocument();
+    });
+  });
+
   describe('Form Submission', () => {
     it('calls onSave with current measurements on submit', async () => {
       const mockOnSave = vi.fn().mockResolvedValue(undefined);
@@ -217,7 +314,7 @@ describe('CalendarModal', () => {
           bbt: '36.6',
           cramps: SYMPTOM_SEVERITY.MILD,
           soreBreasts: SYMPTOM_SEVERITY.NONE,
-          lhSurge: false
+          lhSurge: LH_SURGE_STATUS.NOT_TESTED
         });
       });
     });
@@ -362,7 +459,7 @@ describe('CalendarModal', () => {
           bbt: '36.7',
           cramps: SYMPTOM_SEVERITY.MODERATE,
           soreBreasts: SYMPTOM_SEVERITY.MILD,
-          lhSurge: false
+          lhSurge: LH_SURGE_STATUS.NOT_TESTED
         });
       });
     });
@@ -382,7 +479,7 @@ describe('CalendarModal', () => {
           bbt: '',
           cramps: SYMPTOM_SEVERITY.NONE,
           soreBreasts: SYMPTOM_SEVERITY.NONE,
-          lhSurge: false
+          lhSurge: LH_SURGE_STATUS.NOT_TESTED
         });
       });
     });
@@ -412,7 +509,7 @@ describe('CalendarModal', () => {
             bbt: '',
             cramps: 'none',
             soreBreasts: 'none',
-            lhSurge: false
+            lhSurge: LH_SURGE_STATUS.NOT_TESTED
           });
         });
 

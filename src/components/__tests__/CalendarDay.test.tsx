@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import CalendarDay from '../CalendarDay';
 import { vi } from 'vitest';
-import { PERIOD_OPTIONS, SYMPTOM_SEVERITY } from '../../utils/constants';
+import { PERIOD_OPTIONS, SYMPTOM_SEVERITY, LH_SURGE_STATUS } from '../../utils/constants';
 import { MockDataFactory } from '../../test/helpers/mockData';
 import type { Measurement } from '../../types';
 
@@ -204,9 +204,9 @@ describe('CalendarDay', () => {
         MockDataFactory.createSymptomMeasurement('2024-03-15', 'cramps', SYMPTOM_SEVERITY.MILD),
         MockDataFactory.createSymptomMeasurement('2024-03-15', 'sore_breasts', SYMPTOM_SEVERITY.MODERATE)
       ];
-      
+
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
-      
+
       const symptomElement = screen.getByText('2⚠');
       expect(symptomElement).toBeInTheDocument();
       expect(symptomElement).toHaveStyle({
@@ -220,10 +220,102 @@ describe('CalendarDay', () => {
       const measurements = [
         MockDataFactory.createBBTMeasurement('2024-03-15', 36.5)
       ];
-      
+
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
-      
+
       expect(screen.queryByText(/⚠/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('LH Surge Display', () => {
+    it('shows up arrow for positive LH surge', () => {
+      const measurements: Measurement[] = [
+        {
+          id: 'lh-1',
+          date: '2024-03-15',
+          type: 'lh_surge',
+          value: { status: LH_SURGE_STATUS.POSITIVE }
+        }
+      ];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      expect(screen.getByText('↑')).toBeInTheDocument();
+    });
+
+    it('shows horizontal line for negative LH surge', () => {
+      const measurements: Measurement[] = [
+        {
+          id: 'lh-1',
+          date: '2024-03-15',
+          type: 'lh_surge',
+          value: { status: LH_SURGE_STATUS.NEGATIVE }
+        }
+      ];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      const negativeIndicator = screen.getByText('—');
+      expect(negativeIndicator).toBeInTheDocument();
+      expect(negativeIndicator).toHaveStyle({
+        color: '#999'
+      });
+    });
+
+    it('shows nothing for not tested', () => {
+      const measurements: Measurement[] = [];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      expect(screen.queryByText('↑')).not.toBeInTheDocument();
+      expect(screen.queryByText('—')).not.toBeInTheDocument();
+    });
+
+    it('handles old boolean format (migration)', () => {
+      const measurements = [
+        {
+          id: 'lh-1',
+          date: '2024-03-15',
+          type: 'lh_surge',
+          value: { detected: true }
+        }
+      ] as unknown as Measurement[];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      expect(screen.getByText('↑')).toBeInTheDocument();
+    });
+
+    it('handles old boolean false format (migration)', () => {
+      const measurements = [
+        {
+          id: 'lh-1',
+          date: '2024-03-15',
+          type: 'lh_surge',
+          value: { detected: false }
+        }
+      ] as unknown as Measurement[];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      expect(screen.getByText('—')).toBeInTheDocument();
+    });
+
+    it('displays LH surge with other measurements', () => {
+      const measurements: Measurement[] = [
+        MockDataFactory.createBBTMeasurement('2024-03-15', 36.8),
+        {
+          id: 'lh-1',
+          date: '2024-03-15',
+          type: 'lh_surge',
+          value: { status: LH_SURGE_STATUS.POSITIVE }
+        }
+      ];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} />);
+
+      expect(screen.getByText('↑')).toBeInTheDocument();
+      expect(screen.getByText('36.8°')).toBeInTheDocument();
     });
   });
 

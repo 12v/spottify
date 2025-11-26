@@ -58,7 +58,7 @@ export function useCycleData() {
         });
       }
     } else if (type === 'lh_surge') {
-      if (value === LH_SURGE_STATUS.NOT_DETECTED) {
+      if (value === LH_SURGE_STATUS.NOT_TESTED) {
         if (existing) {
           await DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id);
         }
@@ -66,7 +66,7 @@ export function useCycleData() {
         await DataService.getInstance().addMeasurement(currentUser.uid, {
           type: 'lh_surge',
           date,
-          value: { detected: true }
+          value: { status: value as string }
         });
       }
     } else if (type === 'bbt' && value) {

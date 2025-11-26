@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Calendar from '../Calendar';
 import { vi } from 'vitest';
 import { MockDataFactory } from '../../test/helpers/mockData';
+import { LH_SURGE_STATUS } from '../../utils/constants';
 
 // Mock dependencies
 vi.mock('../../hooks/useCycleData', () => ({
@@ -39,7 +40,7 @@ vi.mock('../CalendarModal', () => ({
         <div data-testid="modal-date">{date}</div>
         <div data-testid="existing-data-count">{existingData.length}</div>
         <button onClick={onClose} data-testid="modal-close">Close</button>
-        <button onClick={() => onSave({ period: 'medium', bbt: '36.5', cramps: 'mild', soreBreasts: 'none', lhSurge: false })} data-testid="modal-save">
+        <button onClick={() => onSave({ period: 'medium', bbt: '36.5', cramps: 'mild', soreBreasts: 'none', lhSurge: LH_SURGE_STATUS.NOT_TESTED })} data-testid="modal-save">
           Save
         </button>
       </div>
@@ -325,7 +326,7 @@ describe('Calendar', () => {
           { type: 'bbt', value: '36.5' },
           { type: 'cramps', value: 'mild' },
           { type: 'sore_breasts', value: 'none' },
-          { type: 'lh_surge', value: false }
+          { type: 'lh_surge', value: LH_SURGE_STATUS.NOT_TESTED }
         ]);
       });
     });
