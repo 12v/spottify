@@ -169,9 +169,9 @@ export default function CalendarModal({ show, date, existingData, onClose, onSav
               onChange={(e) => setMeasurements(prev => ({ ...prev, lhSurge: e.target.value }))}
               className="form-input"
             >
+              <option value={LH_SURGE_STATUS.NOT_TESTED}>Not tested</option>
               <option value={LH_SURGE_STATUS.POSITIVE}>Detected</option>
               <option value={LH_SURGE_STATUS.NEGATIVE}>Not detected</option>
-              <option value={LH_SURGE_STATUS.NOT_TESTED}>Not tested</option>
             </select>
           </div>
 
