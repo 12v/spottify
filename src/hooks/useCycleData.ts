@@ -69,12 +69,18 @@ export function useCycleData() {
           value: { status: value as string }
         });
       }
-    } else if (type === 'bbt' && value) {
-      await DataService.getInstance().addMeasurement(currentUser.uid, {
-        type,
-        date,
-        value: { temperature: parseFloat(value as string) }
-      });
+    } else if (type === 'bbt') {
+      if (!value || value === '') {
+        if (existing) {
+          await DataService.getInstance().deleteMeasurement(currentUser.uid, existing.id);
+        }
+      } else {
+        await DataService.getInstance().addMeasurement(currentUser.uid, {
+          type,
+          date,
+          value: { temperature: parseFloat(value as string) }
+        });
+      }
     }
   }
 
