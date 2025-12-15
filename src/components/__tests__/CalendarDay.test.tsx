@@ -171,30 +171,40 @@ describe('CalendarDay', () => {
   });
 
   describe('BBT Temperature Display', () => {
-    it('displays BBT temperature with blue badge', () => {
+    it('displays BBT temperature indicator as blue dot', () => {
       const measurements = [
         MockDataFactory.createBBTMeasurement('2024-03-15', 36.7)
       ];
       
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
       
-      const bbtElement = screen.getByText('36.7°');
-      expect(bbtElement).toBeInTheDocument();
-      expect(bbtElement).toHaveStyle({
+      // Find the blue dot element (div with blue background and circular shape)
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      
+      expect(blueDot).toBeInTheDocument();
+      expect(blueDot).toHaveStyle({
+        width: '6px',
+        height: '6px',
         backgroundColor: 'rgb(33, 150, 243)',
-        color: 'rgb(255, 255, 255)',
-        padding: '1px 3px'
+        borderRadius: '50%',
+        margin: '0px auto'
       });
     });
 
-    it('displays BBT with proper decimal formatting', () => {
+    it('displays BBT indicator regardless of temperature value', () => {
       const measurements = [
         MockDataFactory.createBBTMeasurement('2024-03-15', 36.0)
       ];
       
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
       
-      expect(screen.getByText('36°')).toBeInTheDocument();
+      // Should show blue dot, not temperature
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      
+      expect(blueDot).toBeInTheDocument();
+      expect(screen.queryByText(/°/)).not.toBeInTheDocument();
     });
   });
 
@@ -315,7 +325,11 @@ describe('CalendarDay', () => {
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
 
       expect(screen.getByText('↑')).toBeInTheDocument();
-      expect(screen.getByText('36.8°')).toBeInTheDocument();
+      
+      // Should show blue dot for BBT, not temperature
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      expect(blueDot).toBeInTheDocument();
     });
   });
 
@@ -331,12 +345,16 @@ describe('CalendarDay', () => {
       
       // All measurement indicators should be present
       expect(screen.getByText('🩸')).toBeInTheDocument();
-      expect(screen.getByText('36.8°')).toBeInTheDocument();
+      
+      // Should show blue dot for BBT, not temperature
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      expect(blueDot).toBeInTheDocument();
+      
       expect(screen.getByText('1⚠')).toBeInTheDocument();
       
       // Background should be period color
-      const dayElement = screen.getByText('15').parentElement;
-      expect(dayElement).toHaveStyle({
+      expect(container).toHaveStyle({
         backgroundColor: '#f75555ff'
       });
     });
@@ -350,12 +368,16 @@ describe('CalendarDay', () => {
       render(<CalendarDay {...defaultProps} measurements={measurements} />);
       
       expect(screen.queryByText('🩸')).not.toBeInTheDocument();
-      expect(screen.getByText('36.4°')).toBeInTheDocument();
+      
+      // Should show blue dot for BBT
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      expect(blueDot).toBeInTheDocument();
+      
       expect(screen.getByText('1⚠')).toBeInTheDocument();
       
       // Should have border for non-period data
-      const dayElement = screen.getByText('15').parentElement;
-      expect(dayElement).toHaveStyle({
+      expect(container).toHaveStyle({
         border: '2px solid #e1bee7' // Light purple for other data
       });
     });
@@ -424,7 +446,11 @@ describe('CalendarDay', () => {
       render(<CalendarDay {...defaultProps} measurements={measurements} isPredOvulation={true} />);
       
       expect(screen.getByText('🥚')).toBeInTheDocument();
-      expect(screen.getByText('36.9°')).toBeInTheDocument();
+      
+      // Should show blue dot for BBT
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      expect(blueDot).toBeInTheDocument();
     });
   });
 
@@ -497,8 +523,10 @@ describe('CalendarDay', () => {
         render(<CalendarDay {...defaultProps} measurements={measurements} />);
       }).not.toThrow();
       
-      // Should still display valid measurements
-      expect(screen.getByText('36.5°')).toBeInTheDocument();
+      // Should still display valid measurements (blue dot for BBT)
+      const container = screen.getByText('15').parentElement;
+      const blueDot = container?.querySelector('div[style*="background-color: rgb(33, 150, 243)"]');
+      expect(blueDot).toBeInTheDocument();
     });
 
     it('handles different day numbers correctly', () => {

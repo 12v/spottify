@@ -174,14 +174,12 @@ function CalendarDay({
             )}
             {dayData.bbt && (
               <div style={{
+                width: '6px',
+                height: '6px',
                 backgroundColor: '#2196f3',
-                color: 'white',
-                padding: '1px 3px',
-                borderRadius: '2px',
-                textAlign: 'center'
-              }}>
-                {dayData.bbt}°
-              </div>
+                borderRadius: '50%',
+                margin: '0 auto'
+              }} />
             )}
             {dayData.symptoms > 0 && (
               <div style={{
