@@ -153,8 +153,6 @@ describe('CalendarDay', () => {
     });
 
     it('handles unknown period flow types gracefully', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
       const measurements: Measurement[] = [{
         id: 'test-unknown',
         date: '2024-03-15',
@@ -162,11 +160,10 @@ describe('CalendarDay', () => {
         value: { option: 'unknown-flow' }
       }];
       
-      render(<CalendarDay {...defaultProps} measurements={measurements} />);
-      
-      expect(consoleSpy).toHaveBeenCalledWith('Unknown period flow type: unknown-flow');
-      
-      consoleSpy.mockRestore();
+      // Should not throw and render the day
+      expect(() => {
+        render(<CalendarDay {...defaultProps} measurements={measurements} />);
+      }).not.toThrow();
     });
   });
 
@@ -376,10 +373,7 @@ describe('CalendarDay', () => {
       
       expect(screen.getByText('1⚠')).toBeInTheDocument();
       
-      // Should have border for non-period data
-      expect(container).toHaveStyle({
-        border: '2px solid #e1bee7' // Light purple for other data
-      });
+      // Border styling removed - only today marker gets border
     });
   });
 

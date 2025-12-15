@@ -22,29 +22,6 @@ function CalendarDay({
   onClick
 }: CalendarDayProps) {
   
-  function getDayColor() {
-    const periodMeasurement = measurements.find(m => m.type === 'period');
-
-    if (periodMeasurement) {
-      const flow = (periodMeasurement.value as { option: string }).option;
-      switch (flow) {
-        case PERIOD_OPTIONS.HEAVY: return '#d32f2f';
-        case PERIOD_OPTIONS.MEDIUM: return '#f57c00';
-        case PERIOD_OPTIONS.LIGHT: return '#fbc02d';
-        case PERIOD_OPTIONS.SPOTTING: return '#ffb74d';
-        default: 
-          console.error(`Unknown period flow type: ${flow}`);
-          return 'transparent';
-      }
-    }
-
-    if (measurements.length > 0) {
-      return '#e1bee7'; // Light purple for other data
-    }
-
-    return 'transparent';
-  }
-
   function getDayData() {
     const period = measurements.find(m => m.type === 'period');
     const bbt = measurements.find(m => m.type === 'bbt');
@@ -72,7 +49,6 @@ function CalendarDay({
   }
 
   const dayData = getDayData();
-  const backgroundColor = getDayColor();
   const hasData = measurements.length > 0;
 
   let dayBackgroundColor = 'white';
@@ -107,8 +83,7 @@ function CalendarDay({
       style={{
         padding: '0.5rem',
         backgroundColor: dayBackgroundColor,
-        border: todayMarker ? '3px solid #4169E1' :
-          (hasData && !dayData.period) ? `2px solid ${backgroundColor}` : 'none',
+        border: todayMarker ? '3px solid #4169E1' : 'none',
         minHeight: '60px',
         display: 'flex',
         flexDirection: 'column',
