@@ -56,10 +56,12 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
     );
   }
 
-  // Determine max cycle day from all data
-  const maxCycleDay = Math.max(
+  // Use average cycle length for x-axis max instead of max data point
+  const stats = CycleService.calculateCycleStats(measurements);
+  const maxCycleDay = stats ? stats.averageCycleLength : Math.max(
     allBbtData.length > 0 ? Math.max(...allBbtData.map(d => d.cycleDay)) : 0,
-    currentData.length > 0 ? Math.max(...currentData.map(d => d.cycleDay)) : 0
+    currentData.length > 0 ? Math.max(...currentData.map(d => d.cycleDay)) : 0,
+    28 // Default to 28 days if no stats
   );
 
   if (maxCycleDay === 0) {
