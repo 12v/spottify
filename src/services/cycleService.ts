@@ -18,16 +18,16 @@ export class CycleService {
     const periodLengths = cycles.map(cycle => cycle.periodLength);
 
     return {
-      averageCycleLength: this.calculateWeightedAverage(cycleLengths),
+      averageCycleLength: Math.round(this.calculateWeightedAverage(cycleLengths)),
       cycleVariation: this.calculateVariation(cycleLengths),
-      averagePeriodLength: this.calculateWeightedAverage(periodLengths)
+      averagePeriodLength: Math.round(this.calculateWeightedAverage(periodLengths))
     };
   }
 
   static predictNextCycle(measurements: Measurement[]): Prediction | null {
     const stats = this.calculateCycleStats(measurements);
     const lastPeriodStart = this.getLastPeriodStart(measurements);
-    
+
     // Need both stats and last period start to make predictions
     if (!stats || !lastPeriodStart) {
       return null;
@@ -161,7 +161,7 @@ export class CycleService {
     
     return {
       cycleDay: daysSinceLastPeriod,
-      cycleLength: stats ? Math.round(stats.averageCycleLength) : null
+      cycleLength: stats ? stats.averageCycleLength : null
     };
   }
 
@@ -198,15 +198,13 @@ export class CycleService {
 
     const today = new Date();
     const daysSinceLastPeriod = Math.floor((today.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
-    const averagePeriodLength = Math.round(stats.averagePeriodLength);
-    const averageCycleLength = Math.round(stats.averageCycleLength);
 
     // Check if currently in period
-    const isInPeriod = daysSinceLastPeriod >= 0 && daysSinceLastPeriod < averagePeriodLength;
-    const daysLeftInPeriod = isInPeriod ? averagePeriodLength - daysSinceLastPeriod - 1 : null;
+    const isInPeriod = daysSinceLastPeriod >= 0 && daysSinceLastPeriod < stats.averagePeriodLength;
+    const daysLeftInPeriod = isInPeriod ? stats.averagePeriodLength - daysSinceLastPeriod - 1 : null;
 
     // Check if period is expected to start today
-    const expectedNextPeriodDate = new Date(lastPeriodStart.getTime() + averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const expectedNextPeriodDate = new Date(lastPeriodStart.getTime() + stats.averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     const isPeriodExpectedToday = formatLocalDate(today) === formatLocalDate(expectedNextPeriodDate);
 
     // Check if period hasn't been recorded today but is expected

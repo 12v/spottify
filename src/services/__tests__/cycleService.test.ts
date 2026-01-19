@@ -50,6 +50,31 @@ describe('CycleService', () => {
       expect(stats!.averagePeriodLength).toBeCloseTo(2, 0);
     });
 
+    it('returns whole numbers for cycle and period lengths', () => {
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2024-01-01'),
+        createPeriodMeasurement('2024-01-02'),
+        createPeriodMeasurement('2024-01-03'), // 3-day period
+        createPeriodMeasurement('2024-01-29'), // 28-day cycle
+        createPeriodMeasurement('2024-01-30'),
+        createPeriodMeasurement('2024-01-31'), // 3-day period
+        createPeriodMeasurement('2024-02-27'), // 29-day cycle (28.5 average)
+        createPeriodMeasurement('2024-02-28'),
+        createPeriodMeasurement('2024-02-29'),
+        createPeriodMeasurement('2024-03-01'), // 4-day period (3.33 average)
+      ];
+
+      const stats = CycleService.calculateCycleStats(measurements);
+
+      expect(stats).not.toBeNull();
+      // Ensure values are integers (no decimals)
+      expect(Number.isInteger(stats!.averageCycleLength)).toBe(true);
+      expect(Number.isInteger(stats!.averagePeriodLength)).toBe(true);
+      // Verify reasonable values
+      expect(stats!.averageCycleLength).toBeGreaterThan(0);
+      expect(stats!.averagePeriodLength).toBeGreaterThan(0);
+    });
+
     it('filters out none and spotting measurements', () => {
       const measurements: Measurement[] = [
         createPeriodMeasurement('2024-01-01', PERIOD_OPTIONS.MEDIUM),
@@ -102,6 +127,33 @@ describe('CycleService', () => {
 
       const prediction = CycleService.predictNextCycle(measurements);
       expect(prediction).toBeNull(); // Not enough data for predictions
+    });
+
+    it('calculates ovulation date using rounded cycle length', () => {
+      // Create cycles that would average to 28.5 days (should round to 29)
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2023-12-01'),
+        createPeriodMeasurement('2023-12-02'),
+        createPeriodMeasurement('2023-12-29'), // 28-day cycle
+        createPeriodMeasurement('2023-12-30'),
+        createPeriodMeasurement('2024-01-28'), // 30-day cycle (avg 29)
+        createPeriodMeasurement('2024-01-29'),
+      ];
+
+      const prediction = CycleService.predictNextCycle(measurements);
+      const stats = CycleService.calculateCycleStats(measurements);
+
+      expect(prediction).not.toBeNull();
+      expect(stats).not.toBeNull();
+
+      // Verify stats use rounded value
+      expect(stats!.averageCycleLength).toBe(29);
+
+      // Verify ovulation is calculated with rounded cycle length
+      // Next period: 2024-01-28 + 29 = 2024-02-26
+      // Ovulation: 2024-02-26 - 14 = 2024-02-12
+      expect(prediction!.nextPeriod).toBe('2024-02-26');
+      expect(prediction!.ovulation).toBe('2024-02-12');
     });
   });
 

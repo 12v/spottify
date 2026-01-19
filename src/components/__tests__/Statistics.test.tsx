@@ -227,9 +227,9 @@ describe('Statistics', () => {
   describe('Summary Statistics', () => {
     it('displays statistical summary when data available', async () => {
       const mockStats = {
-        averageCycleLength: 29.5,
+        averageCycleLength: 30,
         cycleVariation: 2.3,
-        averagePeriodLength: 5.8
+        averagePeriodLength: 6
       };
       const mockCycleData = [
         { cycleNumber: 1, cycleLength: 28, periodLength: 5, startDate: '2024-01-01' },
@@ -459,9 +459,9 @@ describe('Statistics', () => {
   describe('Statistical Accuracy', () => {
     it('correctly rounds statistical values for display with sufficient data', async () => {
       const mockStats = {
-        averageCycleLength: 28.7,
+        averageCycleLength: 29,
         cycleVariation: 2.4,
-        averagePeriodLength: 5.3
+        averagePeriodLength: 5
       };
       const mockCycleData = [
         { cycleNumber: 1, cycleLength: 28, periodLength: 5, startDate: '2024-01-01' },

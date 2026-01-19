@@ -177,9 +177,9 @@ export default function Statistics() {
             <div className="content-box">
               <h3>Summary Statistics</h3>
               <div style={{ display: 'grid', gap: '0.5rem' }}>
-                <div><strong>Average Cycle Length:</strong> {Math.round(stats.averageCycleLength)} days</div>
+                <div><strong>Average Cycle Length:</strong> {stats.averageCycleLength} days</div>
                 <div><strong>Cycle Variation:</strong> ±{Math.round(stats.cycleVariation)} days</div>
-                <div><strong>Average Period Length:</strong> {Math.round(stats.averagePeriodLength)} days</div>
+                <div><strong>Average Period Length:</strong> {stats.averagePeriodLength} days</div>
                 <div><strong>Total Cycles Analysed:</strong> {cycleData.length}</div>
                 <div><strong>Data Range:</strong> {
                   cycleData.length > 0 

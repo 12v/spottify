@@ -108,6 +108,26 @@ describe('useCyclePredictions', () => {
       expect(result.current.isPredictedOvulation('2024-01-14')).toBe(false);
       expect(result.current.isPredictedOvulation('2024-01-16')).toBe(false);
     });
+
+    it('uses whole number cycle lengths for predictions', () => {
+      // Test with stats that are already rounded (as they should be from calculateCycleStats)
+      const roundedStats: CycleStats = {
+        averageCycleLength: 29, // Already rounded
+        cycleVariation: 2.5,
+        averagePeriodLength: 5
+      };
+
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2024-01-01'),
+        createPeriodMeasurement('2024-01-02'),
+      ];
+
+      const { result } = renderHook(() => useCyclePredictions(measurements, roundedStats));
+
+      // With 29-day cycle: next period = 2024-01-30, ovulation = 2024-01-16 (30 - 14)
+      expect(result.current.isPredictedOvulation('2024-01-16')).toBe(true);
+      expect(result.current.isPredictedOvulation('2024-01-15')).toBe(false);
+    });
   });
 
   describe('isInFertileWindow', () => {

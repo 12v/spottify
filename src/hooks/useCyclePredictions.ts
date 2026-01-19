@@ -13,24 +13,22 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
     if (!lastPeriodStart) return false;
 
     const checkDate = new Date(dateStr);
-    const averageCycleLength = Math.round(stats.averageCycleLength);
-    const averagePeriodLength = Math.round(stats.averagePeriodLength);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
-    
+
     // Check if we're currently in the ongoing period (from last period start)
-    if (daysSinceLastPeriod >= 0 && daysSinceLastPeriod < averagePeriodLength) {
+    if (daysSinceLastPeriod >= 0 && daysSinceLastPeriod < stats.averagePeriodLength) {
       return true;
     }
-    
-    // Check for future periods
-    if (daysSinceLastPeriod < averageCycleLength) return false;
 
-    const cycleNumber = Math.floor(daysSinceLastPeriod / averageCycleLength);
-    const periodStartDate = new Date(lastPeriodStart.getTime() + (cycleNumber * averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
+    // Check for future periods
+    if (daysSinceLastPeriod < stats.averageCycleLength) return false;
+
+    const cycleNumber = Math.floor(daysSinceLastPeriod / stats.averageCycleLength);
+    const periodStartDate = new Date(lastPeriodStart.getTime() + (cycleNumber * stats.averageCycleLength * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
     const daysDiff = Math.floor((checkDate.getTime() - periodStartDate.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
-    return daysDiff >= 0 && daysDiff < averagePeriodLength;
+    return daysDiff >= 0 && daysDiff < stats.averagePeriodLength;
   }, [measurements, stats]);
 
   const isPredictedOvulation = useMemo(() => (dateStr: string) => {
@@ -40,17 +38,16 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
     if (!lastPeriodStart) return false;
 
     const checkDate = new Date(dateStr);
-    const averageCycleLength = Math.round(stats.averageCycleLength);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
-    const currentOvulation = new Date(lastPeriodStart.getTime() + (averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const currentOvulation = new Date(lastPeriodStart.getTime() + (stats.averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     if (formatLocalDate(checkDate) === formatLocalDate(currentOvulation)) return true;
 
-    if (daysSinceLastPeriod < averageCycleLength) return false;
+    if (daysSinceLastPeriod < stats.averageCycleLength) return false;
 
-    const cycleNumber = Math.floor(daysSinceLastPeriod / averageCycleLength);
-    const ovulationDate = new Date(lastPeriodStart.getTime() + (cycleNumber * averageCycleLength + (averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION)) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const cycleNumber = Math.floor(daysSinceLastPeriod / stats.averageCycleLength);
+    const ovulationDate = new Date(lastPeriodStart.getTime() + (cycleNumber * stats.averageCycleLength + (stats.averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION)) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
     return formatLocalDate(checkDate) === formatLocalDate(ovulationDate);
   }, [measurements, stats]);
@@ -62,20 +59,19 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
     if (!lastPeriodStart) return false;
 
     const checkDate = new Date(dateStr);
-    const averageCycleLength = Math.round(stats.averageCycleLength);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
-    const currentOvulation = new Date(lastPeriodStart.getTime() + (averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const currentOvulation = new Date(lastPeriodStart.getTime() + (stats.averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     const currentFertileStart = new Date(currentOvulation.getTime() - (CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
     const currentFertileEnd = new Date(currentOvulation.getTime() + (CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
 
     if (checkDate >= currentFertileStart && checkDate <= currentFertileEnd) return true;
 
-    if (daysSinceLastPeriod < averageCycleLength) return false;
+    if (daysSinceLastPeriod < stats.averageCycleLength) return false;
 
-    const cycleNumber = Math.floor(daysSinceLastPeriod / averageCycleLength);
-    const ovulationDate = new Date(lastPeriodStart.getTime() + (cycleNumber * averageCycleLength + (averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION)) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+    const cycleNumber = Math.floor(daysSinceLastPeriod / stats.averageCycleLength);
+    const ovulationDate = new Date(lastPeriodStart.getTime() + (cycleNumber * stats.averageCycleLength + (stats.averageCycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION)) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     const fertileStart = new Date(ovulationDate.getTime() - (CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
     const fertileEnd = new Date(ovulationDate.getTime() + (CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
 
