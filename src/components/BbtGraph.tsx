@@ -148,6 +148,19 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
     spanGaps: false,
   });
 
+  // Calculate min/max temperatures from all data for better zoom
+  const allTemperatures = [
+    ...allBbtData.map(d => d.temperature),
+    ...currentData.map(d => d.temperature)
+  ].filter(t => t !== null && t !== undefined);
+
+  const minTemp = allTemperatures.length > 0 ? Math.min(...allTemperatures) : 35.5;
+  const maxTemp = allTemperatures.length > 0 ? Math.max(...allTemperatures) : 38.0;
+
+  // Add small padding (0.2°C) above and below for visual breathing room
+  const yMin = Math.floor((minTemp - 0.2) * 10) / 10;
+  const yMax = Math.ceil((maxTemp + 0.2) * 10) / 10;
+
   const chartData = {
     labels,
     datasets
@@ -222,8 +235,8 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
           }
         },
         beginAtZero: false,
-        min: 35.5,
-        max: 38.0,
+        min: yMin,
+        max: yMax,
         ticks: {
           callback: (value) => Number(value).toFixed(1)
         }
