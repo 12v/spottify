@@ -267,8 +267,8 @@ describe('Statistics', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/Data Range:/)).toBeInTheDocument();
-        // Date formatting may vary, so just check for presence of dates
-        expect(screen.getByText(/1\/1\/2024.*2\/1\/2024/)).toBeInTheDocument();
+        // Tests run with en-GB locale, so expect UK date format (dd/mm/yyyy)
+        expect(screen.getByText(/01\/01\/2024 - 01\/02\/2024/)).toBeInTheDocument();
       });
     });
   });

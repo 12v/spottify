@@ -43,15 +43,10 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
     );
   }
 
-  const historicalData = CycleService.getHistoricalBbtAverage(measurements);
+  const allBbtData = CycleService.getBbtByRelativeCycleDay(measurements);
   const currentData = CycleService.getCurrentCycleBbt(measurements);
 
-  const maxDay = Math.max(
-    historicalData.length > 0 ? historicalData[historicalData.length - 1].cycleDay : 0,
-    currentData.length > 0 ? currentData[currentData.length - 1].cycleDay : 0
-  );
-
-  if (maxDay === 0) {
+  if (allBbtData.length === 0 && currentData.length === 0) {
     return (
       <div className="chart">
         <div className="chart-disclaimer">
@@ -61,33 +56,83 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
     );
   }
 
-  const labels = Array.from({ length: maxDay }, (_, i) => i + 1);
+  // Determine max cycle day from all data
+  const maxCycleDay = Math.max(
+    allBbtData.length > 0 ? Math.max(...allBbtData.map(d => d.cycleDay)) : 0,
+    currentData.length > 0 ? Math.max(...currentData.map(d => d.cycleDay)) : 0
+  );
 
-  const historicalTemps = labels.map(day => {
-    const dataPoint = historicalData.find(d => d.cycleDay === day);
-    return dataPoint?.avgTemperature ?? null;
+  if (maxCycleDay === 0) {
+    return (
+      <div className="chart">
+        <div className="chart-disclaimer">
+          No BBT data available for graphing.
+        </div>
+      </div>
+    );
+  }
+
+  const labels = Array.from({ length: maxCycleDay }, (_, i) => i + 1);
+
+  // Get max cycle number to identify current cycle
+  const maxCycleNumber = Math.max(...allBbtData.map(d => d.cycleNumber), 0);
+  
+  // Group historical data by cycle number
+  const pastCycles = new Map<number, Array<{ cycleDay: number; temperature: number }>>();
+  allBbtData.forEach(data => {
+    if (data.cycleNumber < maxCycleNumber) {
+      if (!pastCycles.has(data.cycleNumber)) {
+        pastCycles.set(data.cycleNumber, []);
+      }
+      pastCycles.get(data.cycleNumber)!.push({ cycleDay: data.cycleDay, temperature: data.temperature });
+    }
   });
 
+  // Color palette for past cycles (faint colors)
+  const cycleColors = [
+    'rgba(155, 89, 182, 0.3)',      // Purple
+    'rgba(52, 152, 219, 0.3)',      // Blue
+    'rgba(26, 188, 156, 0.3)',      // Teal
+    'rgba(241, 196, 15, 0.3)',      // Yellow
+    'rgba(230, 126, 34, 0.3)',      // Orange
+    'rgba(231, 76, 60, 0.3)',       // Red
+    'rgba(155, 89, 182, 0.2)',      // Light Purple
+    'rgba(52, 152, 219, 0.2)',      // Light Blue
+    'rgba(26, 188, 156, 0.2)',      // Light Teal
+    'rgba(241, 196, 15, 0.2)',      // Light Yellow
+  ];
+
+  const datasets = [];
+
+  // Add past cycles
+  let colorIndex = 0;
+  Array.from(pastCycles.entries())
+    .sort((a, b) => a[0] - b[0])
+    .forEach(([cycleNum, data]) => {
+      const cycleTemps = labels.map(day => {
+        const dataPoint = data.find(d => d.cycleDay === day);
+        return dataPoint?.temperature ?? null;
+      });
+
+      datasets.push({
+        label: `Cycle ${cycleNum}`,
+        data: cycleTemps,
+        borderColor: cycleColors[colorIndex % cycleColors.length],
+        backgroundColor: 'transparent',
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 1.5,
+        spanGaps: false,
+      });
+      colorIndex++;
+    });
+
+  // Add current cycle - make it stand out
   const currentTemps = labels.map(day => {
     const dataPoint = currentData.find(d => d.cycleDay === day);
     return dataPoint?.temperature ?? null;
   });
-
-  const datasets = [];
-
-  if (historicalData.length > 0) {
-    datasets.push({
-      label: 'Historical Average',
-      data: historicalTemps,
-      borderColor: '#9B59B6',
-      backgroundColor: 'rgba(155, 89, 182, 0.1)',
-      tension: 0.3,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      borderWidth: 2,
-      spanGaps: false,
-    });
-  }
 
   datasets.push({
     label: 'Current Cycle',
@@ -97,7 +142,7 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
     tension: 0.3,
     pointRadius: 3,
     pointHoverRadius: 5,
-    borderWidth: 2,
+    borderWidth: 2.5,
     spanGaps: false,
   });
 
@@ -190,7 +235,7 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
         <Line data={chartData} options={options} />
       </div>
       <div className="chart-disclaimer">
-        Historical average shown for past cycles. Current cycle updates as you log temperatures.
+        Past cycles shown as faint lines. Current cycle (bright pink) updates as you log temperatures.
       </div>
     </div>
   );
