@@ -74,13 +74,15 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
 
   const labels = Array.from({ length: maxCycleDay }, (_, i) => i + 1);
 
-  // Get max cycle number to identify current cycle
-  const maxCycleNumber = Math.max(...allBbtData.map(d => d.cycleNumber), 0);
-  
-  // Group historical data by cycle number
+  // Determine which cycle numbers represent "current cycle" vs "past cycles"
+  // Current cycle is any BBT data that's in currentData (which is based on last period start)
+  const currentCycleDates = new Set(currentData.map(d => d.date));
+
+  // Group past cycle data by cycle number (exclude any data that's in current cycle)
   const pastCycles = new Map<number, Array<{ cycleDay: number; temperature: number }>>();
   allBbtData.forEach(data => {
-    if (data.cycleNumber < maxCycleNumber) {
+    // Only include in past cycles if this BBT measurement is NOT in the current cycle
+    if (!currentCycleDates.has(data.date)) {
       if (!pastCycles.has(data.cycleNumber)) {
         pastCycles.set(data.cycleNumber, []);
       }
