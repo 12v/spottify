@@ -34,10 +34,20 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
   const isPredictedOvulation = useMemo(() => (dateStr: string) => {
     if (!stats) return false;
 
+    const checkDate = new Date(dateStr);
+
+    // Check historical cycles
+    const cycleData = CycleService.getCycleData(measurements);
+    for (const cycle of cycleData) {
+      const cycleStart = new Date(cycle.startDate);
+      const ovulationDate = new Date(cycleStart.getTime() + (cycle.cycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+
+      if (formatLocalDate(checkDate) === formatLocalDate(ovulationDate)) return true;
+    }
+
+    // Check current/future cycles
     const lastPeriodStart = CycleService.getLastPeriodStart(measurements);
     if (!lastPeriodStart) return false;
-
-    const checkDate = new Date(dateStr);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
@@ -55,10 +65,22 @@ export function useCyclePredictions(measurements: Measurement[], stats: CycleSta
   const isInFertileWindow = useMemo(() => (dateStr: string) => {
     if (!stats) return false;
 
+    const checkDate = new Date(dateStr);
+
+    // Check fertile windows for historical cycles
+    const cycleData = CycleService.getCycleData(measurements);
+    for (const cycle of cycleData) {
+      const cycleStart = new Date(cycle.startDate);
+      const ovulationDate = new Date(cycleStart.getTime() + (cycle.cycleLength - CYCLE_CONSTANTS.DAYS_BEFORE_PERIOD_FOR_OVULATION) * TIME_CONSTANTS.MILLISECONDS_PER_DAY);
+      const fertileStart = new Date(ovulationDate.getTime() - (CYCLE_CONSTANTS.FERTILE_WINDOW_START_DAYS_BEFORE_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
+      const fertileEnd = new Date(ovulationDate.getTime() + (CYCLE_CONSTANTS.FERTILE_WINDOW_END_DAYS_AFTER_OVULATION * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
+
+      if (checkDate >= fertileStart && checkDate <= fertileEnd) return true;
+    }
+
+    // Check current/future cycles
     const lastPeriodStart = CycleService.getLastPeriodStart(measurements);
     if (!lastPeriodStart) return false;
-
-    const checkDate = new Date(dateStr);
 
     const daysSinceLastPeriod = Math.floor((checkDate.getTime() - lastPeriodStart.getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
 
