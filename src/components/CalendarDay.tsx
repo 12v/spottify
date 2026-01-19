@@ -53,7 +53,7 @@ function CalendarDay({
 
   let dayBackgroundColor = 'white';
 
-  if (inFertileWindow && !hasData && !dayData.period && !isPredPeriod) {
+  if (inFertileWindow && !dayData.period && !isPredPeriod) {
     dayBackgroundColor = '#F0FFF0';
   }
 

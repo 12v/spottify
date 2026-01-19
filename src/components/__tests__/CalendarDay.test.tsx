@@ -423,11 +423,25 @@ describe('CalendarDay', () => {
       const measurements = [
         MockDataFactory.createPeriodMeasurement('2024-03-15', PERIOD_OPTIONS.LIGHT)
       ];
-      
+
       render(<CalendarDay {...defaultProps} measurements={measurements} inFertileWindow={true} />);
-      
+
       const dayElement = screen.getByText('15').parentElement;
       expect(dayElement).not.toHaveStyle({
+        backgroundColor: '#F0FFF0'
+      });
+    });
+
+    it('shows fertile window even when non-period data is logged', () => {
+      const measurements = [
+        MockDataFactory.createBBTMeasurement('2024-03-15', 36.8),
+        MockDataFactory.createSymptomMeasurement('2024-03-15', 'cramps', SYMPTOM_SEVERITY.MILD)
+      ];
+
+      render(<CalendarDay {...defaultProps} measurements={measurements} inFertileWindow={true} />);
+
+      const dayElement = screen.getByText('15').parentElement;
+      expect(dayElement).toHaveStyle({
         backgroundColor: '#F0FFF0'
       });
     });
