@@ -122,7 +122,7 @@ export default function BbtGraph({ currentCycleDay, measurements }: BbtGraphProp
         borderColor: cycleColors[colorIndex % cycleColors.length],
         backgroundColor: 'transparent',
         tension: 0.3,
-        pointRadius: 0,
+        pointRadius: 2,
         pointHoverRadius: 4,
         borderWidth: 1.5,
         spanGaps: false,
