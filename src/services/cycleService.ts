@@ -1,4 +1,4 @@
-import type { Measurement, CycleStats, Prediction } from '../types';
+import type { Measurement, CycleStats, Prediction, CycleInfo } from '../types';
 import { formatLocalDate } from '../utils/dateUtils';
 import { CYCLE_CONSTANTS, TIME_CONSTANTS, PERIOD_OPTIONS } from '../utils/constants';
 
@@ -9,13 +9,14 @@ export class CycleService {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const cycles = this.extractCycles(periodMeasurements);
-    
-    if (cycles.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
+    const filteredCycles = cycles.filter(cycle => !cycle.measurements[0].excludeCycle);
+
+    if (filteredCycles.length < CYCLE_CONSTANTS.MINIMUM_CYCLES_FOR_PREDICTIONS) {
       return null;
     }
 
-    const cycleLengths = cycles.map(cycle => cycle.length);
-    const periodLengths = cycles.map(cycle => cycle.periodLength);
+    const cycleLengths = filteredCycles.map(cycle => cycle.length);
+    const periodLengths = filteredCycles.map(cycle => cycle.periodLength);
 
     return {
       averageCycleLength: Math.round(this.calculateWeightedAverage(cycleLengths)),
@@ -105,9 +106,11 @@ export class CycleService {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     if (periodMeasurements.length < 2) return [];
-    
+
     const cycles = this.extractCycles(periodMeasurements);
-    return cycles.map((cycle, index) => ({
+    const filteredCycles = cycles.filter(cycle => !cycle.measurements[0].excludeCycle);
+
+    return filteredCycles.map((cycle, index) => ({
       cycleNumber: index + 1,
       cycleLength: cycle.length,
       periodLength: cycle.periodLength,
@@ -235,13 +238,14 @@ export class CycleService {
     if (periodMeasurements.length === 0) return [];
 
     const cycles = this.extractCycles(periodMeasurements);
+    const filteredCycles = cycles.filter(cycle => !cycle.measurements[0].excludeCycle);
     const result: Array<{ cycleDay: number; temperature: number; date: string; cycleNumber: number }> = [];
 
-    cycles.forEach((cycle, cycleIndex) => {
+    filteredCycles.forEach((cycle, cycleIndex) => {
       const cycleStartDate = new Date(cycle.measurements[0].date);
 
-      const cycleEndDate = cycleIndex < cycles.length - 1
-        ? new Date(cycles[cycleIndex + 1].measurements[0].date)
+      const cycleEndDate = cycleIndex < filteredCycles.length - 1
+        ? new Date(filteredCycles[cycleIndex + 1].measurements[0].date)
         : new Date();
 
       bbtMeasurements.forEach(bbt => {
@@ -324,6 +328,38 @@ export class CycleService {
     });
 
     return result;
+  }
+
+  static getCycleDataWithExclusions(measurements: Measurement[]): CycleInfo[] {
+    const periodMeasurements = measurements
+      .filter(m => m.type === 'period' && (m.value as { option: string }).option !== PERIOD_OPTIONS.NONE && (m.value as { option: string }).option !== PERIOD_OPTIONS.SPOTTING)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (periodMeasurements.length < 2) return [];
+
+    const cycles = this.extractCycles(periodMeasurements);
+
+    return cycles
+      .map((cycle, index) => {
+        const startDate = cycle.measurements[0].date;
+        const endDate = index < cycles.length - 1
+          ? cycles[index + 1].measurements[0].date
+          : formatLocalDate(new Date());
+
+        const year = new Date(startDate).getFullYear();
+
+        return {
+          cycleNumber: index + 1,
+          cycleLength: cycle.length,
+          periodLength: cycle.periodLength,
+          startDate,
+          endDate,
+          year,
+          isExcluded: cycle.measurements[0].excludeCycle || false,
+          firstMeasurementId: cycle.measurements[0].id
+        };
+      })
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }
 
 }

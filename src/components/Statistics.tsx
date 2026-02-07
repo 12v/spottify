@@ -17,6 +17,7 @@ import { DataService } from '../services/dataService';
 import { CycleService } from '../services/cycleService';
 import { CYCLE_CONSTANTS } from '../utils/constants';
 import LoadingSpinner from './LoadingSpinner';
+import CycleManagementModal from './CycleManagementModal';
 import type { Measurement, CycleStats } from '../types';
 
 ChartJS.register(
@@ -35,6 +36,7 @@ export default function Statistics() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [stats, setStats] = useState<CycleStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showManageModal, setShowManageModal] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -59,6 +61,8 @@ export default function Statistics() {
   }
 
   const cycleData = CycleService.getCycleData(measurements);
+  const allCycles = CycleService.getCycleDataWithExclusions(measurements);
+  const excludedCount = allCycles.filter(c => c.isExcluded).length;
   const dataAlerts = CycleService.checkIncompleteData(measurements);
 
   // Helper function to create histogram data with contiguous range
@@ -154,6 +158,25 @@ export default function Statistics() {
         <Link to="/" className="back-link">← Dashboard</Link>
       </div>
 
+      <div style={{ marginBottom: '1rem' }}>
+        <button
+          onClick={() => setShowManageModal(true)}
+          className="btn btn-secondary"
+          style={{ marginRight: '0.5rem' }}
+        >
+          Manage Cycles
+        </button>
+        {excludedCount > 0 && (
+          <span style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            fontStyle: 'italic'
+          }}>
+            ({excludedCount} excluded)
+          </span>
+        )}
+      </div>
+
       {dataAlerts.length > 0 && (
         <div className="alert warning">
           <strong>⚠️ Incomplete Period Data:</strong>
@@ -180,7 +203,14 @@ export default function Statistics() {
                 <div><strong>Average Cycle Length:</strong> {stats.averageCycleLength} days</div>
                 <div><strong>Cycle Variation:</strong> ±{Math.round(stats.cycleVariation)} days</div>
                 <div><strong>Average Period Length:</strong> {stats.averagePeriodLength} days</div>
-                <div><strong>Total Cycles Analysed:</strong> {cycleData.length}</div>
+                <div>
+                  <strong>Total Cycles Analysed:</strong> {cycleData.length}
+                  {allCycles.length > cycleData.length && (
+                    <span style={{ color: '#666', fontSize: '0.875rem' }}>
+                      {' '}of {allCycles.length} ({excludedCount} excluded)
+                    </span>
+                  )}
+                </div>
                 <div><strong>Data Range:</strong> {
                   cycleData.length > 0 
                     ? `${new Date(cycleData[0].startDate).toLocaleDateString()} - ${new Date(cycleData[cycleData.length - 1].startDate).toLocaleDateString()}`
@@ -211,6 +241,13 @@ export default function Statistics() {
           </div>
         </div>
       )}
+
+      <CycleManagementModal
+        show={showManageModal}
+        measurements={measurements}
+        onClose={() => setShowManageModal(false)}
+        onUpdate={loadData}
+      />
     </div>
   );
 }

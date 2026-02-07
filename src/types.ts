@@ -3,6 +3,7 @@ export interface Measurement {
   date: string;
   type: 'period' | 'bbt' | 'cramps' | 'sore_breasts' | 'lh_surge';
   value: PeriodValue | BbtValue | SeverityValue | LhSurgeValue;
+  excludeCycle?: boolean;
 }
 
 export interface PeriodValue {
@@ -34,5 +35,16 @@ export interface Prediction {
     start: string;
     end: string;
   };
+}
+
+export interface CycleInfo {
+  cycleNumber: number;
+  cycleLength: number;
+  periodLength: number;
+  startDate: string;
+  endDate: string;
+  year: number;
+  isExcluded: boolean;
+  firstMeasurementId: string;
 }
 

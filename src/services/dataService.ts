@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, orderBy, where, Timestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, where, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Measurement } from '../types';
 
@@ -55,6 +55,15 @@ export class DataService {
   async deleteMeasurement(_userId: string, measurementId: string): Promise<void> {
     const docRef = doc(db, 'measurements', measurementId);
     await deleteDoc(docRef);
+  }
+
+  async updateMeasurement(measurementId: string, updates: Partial<Measurement>): Promise<void> {
+    const docRef = doc(db, 'measurements', measurementId);
+    await updateDoc(docRef, updates);
+  }
+
+  async toggleCycleExclusion(measurementId: string, exclude: boolean): Promise<void> {
+    await this.updateMeasurement(measurementId, { excludeCycle: exclude });
   }
 
   async removeDuplicates(userId: string): Promise<{ removed: number; kept: number }> {

@@ -49,6 +49,7 @@ vi.mock('../../services/cycleService', () => ({
   CycleService: {
     calculateCycleStats: vi.fn(),
     getCycleData: vi.fn(),
+    getCycleDataWithExclusions: vi.fn(),
     checkIncompleteData: vi.fn()
   }
 }));
@@ -96,6 +97,7 @@ describe('Statistics', () => {
       averagePeriodLength: 5
     });
     mockCycleService.getCycleData.mockReturnValue([]);
+    mockCycleService.getCycleDataWithExclusions.mockReturnValue([]);
     mockCycleService.checkIncompleteData.mockReturnValue([]);
   });
 
