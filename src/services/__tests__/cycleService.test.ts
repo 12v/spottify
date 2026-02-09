@@ -249,10 +249,97 @@ describe('CycleService', () => {
       ];
 
       const result = CycleService.getCurrentPeriodInfo(measurements);
-      
+
       expect(result.isInPeriod).toBe(true);
       expect(result.daysLeftInPeriod).toBe(1); // 2 more days left in 3-day period
       expect(result.isPeriodExpectedToday).toBe(false);
+    });
+  });
+
+  describe('getCycleDataWithExclusions', () => {
+    it('returns empty array for insufficient data', () => {
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2024-01-01')
+      ];
+
+      const cycles = CycleService.getCycleDataWithExclusions(measurements);
+      expect(cycles).toEqual([]);
+    });
+
+    it('calculates correct endDate for complete cycles', () => {
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2024-01-01'),
+        createPeriodMeasurement('2024-01-02'),
+        createPeriodMeasurement('2024-01-03'),
+        createPeriodMeasurement('2024-01-29'), // Gap of 26 days, starts cycle 2
+        createPeriodMeasurement('2024-01-30'),
+        createPeriodMeasurement('2024-02-26'), // Gap of 27 days, starts cycle 3
+        createPeriodMeasurement('2024-02-27')
+      ];
+
+      const cycles = CycleService.getCycleDataWithExclusions(measurements);
+
+      expect(cycles.length).toBe(2);
+      // Sorted descending by start date
+      expect(cycles[0].startDate).toBe('2024-01-29');
+      expect(cycles[0].cycleLength).toBe(28);
+      expect(cycles[0].endDate).toBe('2024-02-26'); // 28 days after Jan 29
+      expect(cycles[1].startDate).toBe('2024-01-01');
+      expect(cycles[1].cycleLength).toBe(28);
+      expect(cycles[1].endDate).toBe('2024-01-29'); // 28 days after Jan 1
+    });
+
+    it('only returns complete cycles with real end dates', () => {
+      // Current date is 2024-01-15 (set in beforeEach)
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2023-12-01'),
+        createPeriodMeasurement('2023-12-02'),
+        createPeriodMeasurement('2023-12-29'), // Gap of 27 days - marks cycle 1 as complete
+        createPeriodMeasurement('2023-12-30'),
+        createPeriodMeasurement('2024-01-13'), // Gap of 14 days - marks cycle 2 as complete
+        createPeriodMeasurement('2024-01-14')  // Cycle 3 is ongoing, won't appear
+      ];
+
+      const cycles = CycleService.getCycleDataWithExclusions(measurements);
+
+      // Two complete cycles, each with real end dates (not today's date)
+      expect(cycles.length).toBe(2);
+      expect(cycles[0].startDate).toBe('2023-12-29');
+      expect(cycles[0].endDate).toBe('2024-01-13'); // Real end date, not "today"
+      expect(cycles[1].startDate).toBe('2023-12-01');
+      expect(cycles[1].endDate).toBe('2023-12-29'); // Real end date
+    });
+
+    it('includes exclusion status from measurements', () => {
+      const measurements: Measurement[] = [
+        { ...createPeriodMeasurement('2024-01-01'), excludeCycle: true },
+        createPeriodMeasurement('2024-01-02'),
+        createPeriodMeasurement('2024-01-29'),
+        createPeriodMeasurement('2024-01-30')
+      ];
+
+      const cycles = CycleService.getCycleDataWithExclusions(measurements);
+
+      expect(cycles.length).toBe(1);
+      expect(cycles[0].isExcluded).toBe(true);
+    });
+
+    it('sorts cycles by start date descending', () => {
+      const measurements: Measurement[] = [
+        createPeriodMeasurement('2024-01-01'),
+        createPeriodMeasurement('2024-01-02'),
+        createPeriodMeasurement('2024-01-29'), // Gap of 27 days
+        createPeriodMeasurement('2024-01-30'),
+        createPeriodMeasurement('2024-02-26'), // Gap of 27 days
+        createPeriodMeasurement('2024-02-27')
+      ];
+
+      const cycles = CycleService.getCycleDataWithExclusions(measurements);
+
+      expect(cycles.length).toBe(2);
+      // Most recent cycle first
+      expect(cycles[0].startDate).toBe('2024-01-29');
+      expect(cycles[1].startDate).toBe('2024-01-01');
     });
   });
 });

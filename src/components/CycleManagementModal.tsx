@@ -29,18 +29,13 @@ export default function CycleManagementModal({ show, measurements, onClose, onUp
   async function toggleExclusion(cycle: CycleInfo) {
     if (updatingId) return;
 
-    const isCurrentCycle = cycle.cycleNumber === cycles.length;
-    if (isCurrentCycle && !cycle.isExcluded) {
-      return;
-    }
-
     setUpdatingId(cycle.firstMeasurementId);
     try {
       await DataService.getInstance().toggleCycleExclusion(
         cycle.firstMeasurementId,
         !cycle.isExcluded
       );
-      await onUpdate();
+      onUpdate();
     } catch (error) {
       console.error('Error toggling cycle exclusion:', error);
     } finally {
@@ -101,7 +96,6 @@ export default function CycleManagementModal({ show, measurements, onClose, onUp
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {yearCycles.map(cycle => {
-                    const isCurrentCycle = cycle.cycleNumber === cycles.length;
                     const isUpdating = updatingId === cycle.firstMeasurementId;
 
                     return (
@@ -142,31 +136,19 @@ export default function CycleManagementModal({ show, measurements, onClose, onUp
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {isCurrentCycle && !cycle.isExcluded && (
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                color: '#666',
-                                fontStyle: 'italic'
-                              }}
-                              title="Current cycle cannot be excluded"
-                            >
-                              Current
-                            </span>
-                          )}
                           <label style={{
                             display: 'flex',
                             alignItems: 'center',
-                            cursor: isCurrentCycle && !cycle.isExcluded ? 'not-allowed' : 'pointer'
+                            cursor: 'pointer'
                           }}>
                             <input
                               type="checkbox"
                               checked={cycle.isExcluded}
-                              disabled={isUpdating || (isCurrentCycle && !cycle.isExcluded)}
+                              disabled={isUpdating}
                               onChange={() => toggleExclusion(cycle)}
                               style={{
                                 marginRight: '0.5rem',
-                                cursor: isCurrentCycle && !cycle.isExcluded ? 'not-allowed' : 'pointer'
+                                cursor: 'pointer'
                               }}
                             />
                             <span style={{ fontSize: '0.875rem' }}>

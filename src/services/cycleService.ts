@@ -342,10 +342,9 @@ export class CycleService {
     return cycles
       .map((cycle, index) => {
         const startDate = cycle.measurements[0].date;
-        const endDate = index < cycles.length - 1
-          ? cycles[index + 1].measurements[0].date
-          : formatLocalDate(new Date());
-
+        const endDate = formatLocalDate(
+          new Date(new Date(startDate).getTime() + cycle.length * TIME_CONSTANTS.MILLISECONDS_PER_DAY)
+        );
         const year = new Date(startDate).getFullYear();
 
         return {
